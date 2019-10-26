@@ -1216,6 +1216,7 @@ class mesh(IntfWireless):
         self.name = ''
         self.node = node
         self.ip = None
+        self.ip6 = None
 
         if intf:
             wlan = node.params['wlan'].index(intf)

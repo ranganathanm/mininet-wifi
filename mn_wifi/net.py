@@ -768,11 +768,10 @@ class Mininet_wifi(Mininet):
             self.staticArp()
 
         for node in self.stations:
-            for wlan in range(0, len(node.params['wlan'])):
-                if not isinstance(node.intfs[wlan], master) \
-                        and not isinstance(node.intfs[wlan], adhoc) \
-                        and not isinstance(node.intfs[wlan], mesh) \
-                        and not isinstance(node.intfs[wlan], wifiDirectLink):
+            for wlan, intf in enumerate(node.intfs.values()):
+                if not isinstance(intf, master) and not isinstance(intf, adhoc) \
+                        and not isinstance(intf, mesh) \
+                        and not isinstance(intf, wifiDirectLink):
                     if isinstance(node, Station) and not hasattr(node, 'range'):
                         node.params['range'][wlan] = \
                             int(node.params['range'][wlan]) / 5
@@ -1799,17 +1798,14 @@ class Mininet_wifi(Mininet):
 
         if not self.roads:
             for node in nodes:
-                for wlan in range(0, len(node.params['wlan'])):
+                for intf in node.intfs:
                     if 'position' in node.params and 'link' not in node.params:
                         if self.wmediumd_mode != error_prob:
                             pos = node.params['position']
-                            wif = wlan
-                            if isinstance(node, AP):
-                                wif += 1
-                            if isinstance(node.intfs[wif], adhoc):
+                            if isinstance(intf, adhoc):
                                 sleep(1.5)
-                            # we need this cause wmediumd is fighting with some associations
-                            # e.g. wpa
+                            # we need this cause wmediumd is struggling
+                            # with some associations e.g. wpa
                             if self.wmediumd_mode == interference:
                                 sleep(0.1)
                                 pos_x = float(pos[0]) + 1

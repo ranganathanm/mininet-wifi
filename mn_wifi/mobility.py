@@ -8,7 +8,7 @@ import numpy as np
 from numpy.random import rand
 
 from mininet.log import debug, info
-from mn_wifi.link import wirelessLink, Association
+from mn_wifi.link import wirelessLink, Association, mesh, adhoc, ITSLink
 from mn_wifi.associationControl import associationControl
 from mn_wifi.plot import plot2d, plot3d, plotGraph
 from mn_wifi.wmediumdConnector import w_cst, wmediumd_mode
@@ -24,7 +24,6 @@ class mobility(object):
     allAutoAssociation = True
     thread_ = ''
     end_time = 0
-    func = ['mesh', 'adhoc', 'its']
 
     @classmethod
     def move_factor(cls, node, diff_time):
@@ -240,13 +239,16 @@ class mobility(object):
     def configureLinks(cls, nodes):
         for node in nodes:
             for wlan in range(len(node.params['wlan'])):
-                if node.func[wlan] == 'mesh' or node.func[wlan] == 'adhoc':
+                if isinstance(node.intfs[wlan], adhoc) or \
+                        isinstance(node.intfs[wlan], mesh) or \
+                        isinstance(node.intfs[wlan], ITSLink):
                     pass
                 else:
                     aps = []
                     for ap in cls.aps:
                         for ap_wlan in range(len(ap.params['wlan'])):
-                            if ap.func[ap_wlan] not in cls.func:
+                            if not isinstance(ap.intfs[ap_wlan], adhoc) and \
+                                    not isinstance(ap.intfs[ap_wlan], mesh):
                                 if wmediumd_mode.mode == w_cst.INTERFERENCE_MODE:
                                     ack = cls.associate_interference_mode(node, ap, wlan, ap_wlan)
                                 else:

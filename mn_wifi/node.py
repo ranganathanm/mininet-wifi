@@ -37,7 +37,8 @@ from mininet.moduledeps import moduleDeps, pathCheck, TUN
 from mininet.link import Intf, OVSIntf
 from mn_wifi.devices import DeviceRate
 from mn_wifi.link import TCWirelessLink, TCLinkWirelessAP,\
-    Association, wirelessLink, adhoc, mesh, physicalMesh, ITSLink
+    Association, wirelessLink, adhoc, mesh, master, managed, \
+    physicalMesh, ITSLink
 from mn_wifi.wmediumdConnector import w_server, w_pos, w_txpower, \
     w_gain, w_height, w_cst, wmediumd_mode
 from mn_wifi.propagationModels import GetSignalRange, \
@@ -118,7 +119,7 @@ class Node_wifi(Node):
         if intf:
             kwargs['intf'] = intf
         wlan = self.get_wlan(kwargs['intf'])
-        if self.func[wlan] == 'adhoc':
+        if isinstance(self.intfs[wlan], adhoc):
             self.cmd('iw dev %s ibss leave' % self.params['wlan'][wlan])
         adhoc(self, **kwargs)
 
@@ -128,16 +129,16 @@ class Node_wifi(Node):
         else:
             wlan = 0
             intf = self.params['wlan'][wlan]
-        if self.func[wlan] == 'mesh':
+        if isinstance(self.intfs[wlan], mesh):
             self.cmd('iw dev %s del' % self.params['wlan'][wlan])
             intf = '%s-wlan%s' % (self, wlan)
             self.params['wlan'][wlan] = intf
-        elif self.func[wlan] == 'ap':
+        elif isinstance(self.intfs[wlan], master):
             apconfname = "mn%d_%s.apconf" % (os.getpid(), intf)
             self.cmd('rm %s' % apconfname)
             self.cmd('pkill -f \'%s\'' % apconfname)
         self.cmd('iw dev %s set type managed' % (self.params['wlan'][wlan]))
-        self.func[wlan] = ''
+        managed(self, wlan)
 
     def setMasterMode(self, intf=None, ssid=None, **kwargs):
         "set Interface to AP mode"
@@ -147,7 +148,7 @@ class Node_wifi(Node):
             ssid = self.name + '-ssid'
         wlan = self.get_wlan(intf)
 
-        self.func[wlan] = 'ap'
+        master(self, wlan)
         self.params['ssid'] = []
         for wlan_ in range (0, len(self.params['wlan'])):
             self.params['ssid'].append('')
@@ -289,12 +290,12 @@ class Node_wifi(Node):
         else:
             wlan = 0
             intf = self.params['wlan'][wlan]
-        if isinstance(self, AP) and self.func[wlan] != 'mesh':
+        if isinstance(self, AP) and isinstance(self.intfs[wlan], mesh):
             IntfWireless.setChannel(self, channel, intf, AP=True)
         else:
-            if self.func[wlan] == 'mesh':
+            if isinstance(self.intfs[wlan], mesh):
                 mesh(self, channel=channel, intf=intf)
-            elif self.func[wlan] == 'adhoc':
+            elif isinstance(self.intfs[wlan], adhoc):
                 self.cmd('iw dev %s ibss leave' % self.params['wlan'][wlan])
                 adhoc(self, channel=channel, intf=intf)
 
@@ -864,6 +865,7 @@ class AccessPoint(AP):
 
     def __init__(self, aps, driver, setMaster=False, config=False):
         'configure ap'
+        self.name = ''
         if config:
             self.check_nm(aps, driver, setMaster)
         else:
@@ -912,7 +914,6 @@ class AccessPoint(AP):
         :param ap: ap node
         :param aplist: list of aps
         :param wlan: wlan id"""
-        ap.func[wlan] = 'ap'
         if ap.params['ssid'][wlan]:
             if 'encrypt' in ap.params and 'config' not in ap.params:
                 if ap.params['encrypt'][wlan] == 'wpa':
@@ -944,7 +945,7 @@ class AccessPoint(AP):
                     ap.wep_key0 = ap.params['passwd'][wlan]
 
             if ap.params['mode'][wlan] == 'adhoc':
-                ap.func[wlan] = 'adhoc'
+                adhoc(ap, wlan)
             else:
                 self.setHostapdConfig(ap, wlan, aplist)
 
@@ -1190,6 +1191,7 @@ class AccessPoint(AP):
 
     def configAP(self, node, wlan):
         TCLinkWirelessAP(node)
+        master(node, wlan)
         #cls.links.append(link)
         self.setIPMAC(node, wlan)
         if 'phywlan' in node.params:

@@ -33,7 +33,8 @@ from mn_wifi.node import AccessPoint, AP, Station, Car, \
 from mn_wifi.wmediumdConnector import error_prob, snr, interference
 from mn_wifi.link import wirelessLink, wmediumd, Association, \
     _4address, TCWirelessLink, TCLinkWirelessStation, ITSLink, \
-    wifiDirectLink, adhoc, mesh, physicalMesh, physicalWifiDirectLink
+    wifiDirectLink, adhoc, mesh, master, managed, physicalMesh, \
+    physicalWifiDirectLink, _4addrClient, _4addrAP
 from mn_wifi.clean import Cleanup as cleanup_mnwifi
 from mn_wifi.devices import CustomRate, DeviceRange
 from mn_wifi.energy import Energy
@@ -376,7 +377,7 @@ class Mininet_wifi(Mininet):
             defaults['isolate_clients'] = True
         defaults.update(params)
         if self.autoSetPositions:
-            defaults['position'] = (round(self.nextPos_ap,2), 50, 0)
+            defaults['position'] = (round(self.nextPos_ap, 2), 50, 0)
             self.nextPos_ap += 100
 
         wlan = None
@@ -400,9 +401,6 @@ class Mininet_wifi(Mininet):
             ap.params['phywlan'] = wlan
 
         self.addParameters(ap, self.autoSetMacs, **defaults)
-        if 'type' in params and params['type'] is 'mesh':
-            ap.func[1] = 'mesh'
-
         self.aps.append(ap)
         return ap
 
@@ -596,7 +594,7 @@ class Mininet_wifi(Mininet):
         doAssociation = True
         if 'position' in sta.params and 'position' in ap.params:
             dist = sta.get_distance_to(ap)
-            if dist <= ap.params['range'][ap_wlan]:
+            if dist > ap.params['range'][ap_wlan]:
                 doAssociation = False
         if doAssociation:
             Association.associate(sta, ap, wlan, ap_wlan)
@@ -606,8 +604,8 @@ class Mininet_wifi(Mininet):
                         not self.ifb:
                     params['bw'] = CustomRate(sta, wlan).rate
                 # tc = True, this is useful for tc configuration
-                link = cls(name=sta.params['wlan'][wlan], node=sta,
-                           tc=True, **params)
+                link = TCWirelessLink(name=sta.params['wlan'][wlan], node=sta,
+                                      tc=True, **params)
                 # self.links.append(link)
                 return link
         if self.link == wmediumd:
@@ -768,11 +766,12 @@ class Mininet_wifi(Mininet):
         if self.autoStaticArp:
             self.staticArp()
 
-        func = ['adhoc', 'mesh', 'wifiDirect']
         for node in self.stations:
             for wlan in range(0, len(node.params['wlan'])):
-                if not isinstance(node, AP) and node.func[0] != 'ap' \
-                        and node.func[wlan] not in func:
+                if not isinstance(node.intfs[wlan], master) \
+                        and not isinstance(node.intfs[wlan], adhoc) \
+                        and not isinstance(node.intfs[wlan], mesh) \
+                        and not isinstance(node.intfs[wlan], wifiDirectLink):
                     if isinstance(node, Station) and not hasattr(node, 'range'):
                         node.params['range'][wlan] = \
                             int(node.params['range'][wlan]) / 5
@@ -1357,8 +1356,6 @@ class Mininet_wifi(Mininet):
         params['wlans'] = self.countWiFiIfaces(**params)
         node.params['wlan'] = []
         node.params['mac'] = []
-        node.phyID = []
-        node.func = []
 
         args = ['passwd', 'scan_freq', 'freq_list', 'authmode',
                 'encrypt', 'radius_server', 'bw']
@@ -1394,8 +1391,6 @@ class Mininet_wifi(Mininet):
             node.params['rssi'] = []
 
         for wlan in range(params['wlans']):
-            node.func.append('none')
-            node.phyID.append(0)
 
             if isinstance(node, AP):
                 node.params['wlan'].append(node.name + '-wlan' + str(wlan + 1))
@@ -1540,8 +1535,6 @@ class Mininet_wifi(Mininet):
                     vif = node.params['wlan'][0] + str(vif_ + 1)
                     node.params['wlan'].append(vif)
                     node.params['associatedTo'].append('')
-                    node.func.append('none')
-                    node.phyID.append(0)
                     node.params['rssi'].append(-60)
 
                     new_mac = list(node.params['mac'][0])
@@ -1556,6 +1549,7 @@ class Mininet_wifi(Mininet):
                     node.cmd('iw dev %s interface add %s type station'
                              % (node.params['wlan'][0], vif))
                     TCLinkWirelessStation(node, intfName1=vif)
+                    managed(node, port=vif)
                     self.configureMacAddr(node)
 
     def configureWirelessLink(self):
@@ -1568,6 +1562,7 @@ class Mininet_wifi(Mininet):
             for wlan in range(0, len(node.params['wlan'])):
                 link = TCLinkWirelessStation(node,
                                              intfName1=node.params['wlan'][wlan])
+                managed(node, wlan)
                 self.links.append(link)
             self.configureMacAddr(node)
 
@@ -1781,8 +1776,9 @@ class Mininet_wifi(Mininet):
         isap = []
         for sta in self.stations:
             for wlan in range(0, len(sta.params['wlan'])):
-                if ((sta.func[wlan] == 'ap' or
-                     sta.func[wlan] == 'client') and sta not in self.aps):
+                if (isinstance(sta.intfs[wlan], _4addrClient or
+                                                isinstance(sta.intfs[wlan], _4addrAP))) and \
+                        sta not in self.aps:
                     if sta not in isap:
                         isap.append(sta)
 
@@ -1806,7 +1802,7 @@ class Mininet_wifi(Mininet):
                     if 'position' in node.params and 'link' not in node.params:
                         if self.wmediumd_mode != error_prob:
                             pos = node.params['position']
-                            if node.func[wlan] == 'adhoc':
+                            if isinstance(node.intfs[wlan], adhoc):
                                 sleep(1.5)
                             # we need this cause wmediumd is fighting with some associations
                             # e.g. wpa

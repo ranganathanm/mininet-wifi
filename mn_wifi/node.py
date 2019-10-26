@@ -142,12 +142,9 @@ class Node_wifi(Node):
 
     def setMasterMode(self, intf=None, ssid=None, **kwargs):
         "set Interface to AP mode"
-        if not intf:
-            intf = self.name + intf
         if not ssid:
             ssid = self.name + '-ssid'
         wlan = self.get_wlan(intf)
-
         master(self, wlan)
         self.params['ssid'] = []
         for wlan_ in range (0, len(self.params['wlan'])):

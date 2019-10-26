@@ -765,13 +765,16 @@ class TCLinkWirelessAP(WirelessLinkAP):
 class master(TCWirelessLink):
     "master class"
     def __init__(self, node, wlan):
+        from mn_wifi.node import AP
+
         self.name = node.params['wlan'][wlan]
         self.node = node
         self.params = {}
         self.ip = None
         self.ip6 = None
         self.link = None
-        wlan += 1
+        if isinstance(node, AP):
+            wlan += 1
         node.addIntf(self, port=wlan)
 
 

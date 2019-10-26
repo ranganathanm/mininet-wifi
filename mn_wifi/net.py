@@ -1549,7 +1549,7 @@ class Mininet_wifi(Mininet):
                     node.cmd('iw dev %s interface add %s type station'
                              % (node.params['wlan'][0], vif))
                     TCLinkWirelessStation(node, intfName1=vif)
-                    managed(node, port=vif)
+                    managed(node, wlan=vif_+1)
                     self.configureMacAddr(node)
 
     def configureWirelessLink(self):

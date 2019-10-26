@@ -1136,6 +1136,7 @@ class adhoc(IntfWireless):
         self: custom association class/constructor
         params: parameters for station"""
         self.node = node
+        self.ip6 = None
         if intf:
             wlan = node.params['wlan'].index(intf)
             if 'mp' in intf:

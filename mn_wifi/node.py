@@ -242,7 +242,8 @@ class Node_wifi(Node):
         txpower = self.params['txpower'][wlan]
         self.setTxPower(txpower, intf=self.params['wlan'][wlan])
         self.updateGraph()
-        self.configLinks()
+        if wlan < len(self.intfs):
+            self.configLinks()
         if plot2d.fig_exists():
             plot2d.updateCircleRadius(self)
 
@@ -306,7 +307,7 @@ class Node_wifi(Node):
                    % (intf, (int(value) * 100)))
         self.params['txpower'][wlan] = value
         self.setTXPowerWmediumd(wlan)
-        if setParam:
+        if setParam and wlan < len(self.intfs):
             self.configLinks()
 
     def get_freq(self, wlan):
@@ -1107,6 +1108,7 @@ class AccessPoint(AP):
                 self.setIPMAC(ap, wlan)
                 intf = ap.params['wlan'][wlan]
                 TCLinkWirelessAP(ap, intfName1=intf)
+                master(ap, wlan)
 
         intf = ap.params['wlan'][wlan]
         if 'phywlan' in ap.params:

@@ -599,17 +599,16 @@ class Mininet_wifi(Mininet):
         if doAssociation:
             Association.associate(sta, ap, wlan, ap_wlan)
 
-            if issubclass(self.link, TCWirelessLink):
-                if 'bw' not in params and 'bw' not in str(cls) and \
-                        not self.ifb:
-                    params['bw'] = CustomRate(sta, wlan).rate
-                if cls == wmediumd:
-                    cls = TCWirelessLink
+            if self.link != wmediumd:
+                bw = None
+                if 'bw' not in params and not self.ifb:
+                    bw = CustomRate(sta, wlan).rate
                 # tc = True, this is useful for tc configuration
                 link = cls(name=sta.params['wlan'][wlan], node=sta,
-                           tc=True, **params)
+                           tc=True, bw=bw, **params)
                 # self.links.append(link)
                 return link
+
         if self.link == wmediumd:
             if self.wmediumd_mode == error_prob:
                 wmediumd.wlinks.append([sta, ap, params['error_prob']])

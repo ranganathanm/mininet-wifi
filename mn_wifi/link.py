@@ -597,12 +597,12 @@ class WirelessLinkAP(object):
     def __init__(self, node, port=None, intfName=None, addr=None,
                  cls=None, params=None):
         """Create veth link to another node, making two new interfaces.
-           node1: first node
-           port1: node1 port number (optional)
+           node: first node
+           port: node port number (optional)
            intf: default interface class/constructor
-           cls1: optional interface-specific constructors
-           intfName1: node1 interface name (optional)
-           params1: parameters for interface 1"""
+           cls: optional interface-specific constructors
+           intfName: node interface name (optional)
+           params: parameters for interface 1"""
         # This is a bit awkward; it seems that having everything in
         # params is more orthogonal, but being able to specify
         # in-line arguments is more convenient! So we support both.
@@ -681,12 +681,12 @@ class WirelessLinkStation(object):
     def __init__(self, node, port=None, intfName=None, addr=None,
                  intf=IntfWireless, cls=None, params=None):
         """Create veth link to another node, making two new interfaces.
-           node1: first node
-           port1: node1 port number (optional)
+           node: first node
+           port: node port number (optional)
            intf: default interface class/constructor
-           cls1: optional interface-specific constructors
-           intfName1: node1 interface name (optional)
-           params1: parameters for interface 1"""
+           cls: optional interface-specific constructors
+           intfName: node interface name (optional)
+           params: parameters for interface 1"""
         # This is a bit awkward; it seems that having everything in
         # params is more orthogonal, but being able to specify
         # in-line arguments is more convenient! So we support both.

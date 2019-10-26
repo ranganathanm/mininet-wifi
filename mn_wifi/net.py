@@ -1802,7 +1802,10 @@ class Mininet_wifi(Mininet):
                     if 'position' in node.params and 'link' not in node.params:
                         if self.wmediumd_mode != error_prob:
                             pos = node.params['position']
-                            if isinstance(node.intfs[wlan], adhoc):
+                            wif = wlan
+                            if isinstance(node, AP):
+                                wif += 1
+                            if isinstance(node.intfs[wif], adhoc):
                                 sleep(1.5)
                             # we need this cause wmediumd is fighting with some associations
                             # e.g. wpa

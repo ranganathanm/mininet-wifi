@@ -769,6 +769,8 @@ class master(TCWirelessLink):
         self.node = node
         self.params = {}
         self.ip = None
+        self.ip6 = None
+        self.link = None
         wlan += 1
         node.addIntf(self, port=wlan)
 
@@ -779,6 +781,7 @@ class managed(TCWirelessLink):
         self.name = node.params['wlan'][wlan]
         self.node = node
         self.ip6 = None
+        self.link = None
         node.addIntf(self, port=wlan)
 
 
@@ -830,6 +833,8 @@ class wmediumd(TCWirelessLink):
                 node.wmIface.append(wlan)
                 node.wmIface[wlan] = DynamicIntfRef(node, intf=wlan)
                 intfrefs.append(node.wmIface[wlan])
+                if wlan not in node.intfs:
+                    wlan += 1
                 if (isinstance(node.intfs[wlan], master)
                     or (node in aps and (not isinstance(node.intfs[wlan], managed)
                                          and not isinstance(node.intfs[wlan], adhoc)))):
@@ -1137,6 +1142,7 @@ class adhoc(IntfWireless):
         params: parameters for station"""
         self.node = node
         self.ip6 = None
+        self.mac = None
         if intf:
             wlan = node.params['wlan'].index(intf)
             if 'mp' in intf:
@@ -1206,6 +1212,7 @@ class mesh(IntfWireless):
         params: parameters for node"""
         self.name = ''
         self.node = node
+        self.ip = None
 
         if intf:
             wlan = node.params['wlan'].index(intf)
@@ -1221,7 +1228,12 @@ class mesh(IntfWireless):
         return '%s interface add %s type mp' % (intf, self.name)
 
     def setMeshIface(self, node, mode, channel, wlan, intf):
-        if isinstance(node.intfs[wlan], adhoc):
+        from mn_wifi.node import AP
+
+        wif = wlan
+        if isinstance(node, AP):
+            wif += 1
+        if isinstance(node.intfs[wif], adhoc):
             self.set_dev_type('managed')
         self.name = '%s-mp%s' % (node, node.params['wlan'][wlan][-1:])
         self.iwdev_cmd(self.set_mesh_type(intf))
@@ -1236,16 +1248,18 @@ class mesh(IntfWireless):
         if 'ip' in node.params:
             node.cmd('ip addr add %s dev %s' % (node.params['ip'][wlan],
                                                 self.name))
-        else:
-            self.name = intf
         self.ipLink('up')
 
     def configureMesh(self, node, wlan, ssid, ht_cap, passwd):
         "Configure Wireless Mesh Interface"
+        from mn_wifi.node import AP
+
         if passwd:
             self.setSecuredMesh(node, wlan, passwd)
         else:
             self.associate(node, wlan, ssid, ht_cap)
+        if isinstance(node, AP):
+            wlan += 1
         node.addIntf(self, port=wlan)
 
     def associate(self, node, wlan, ssid, ht_cap):

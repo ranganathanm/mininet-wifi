@@ -603,6 +603,8 @@ class Mininet_wifi(Mininet):
                 if 'bw' not in params and 'bw' not in str(cls) and \
                         not self.ifb:
                     params['bw'] = CustomRate(sta, wlan).rate
+                if cls == wmediumd:
+                    cls = TCWirelessLink
                 # tc = True, this is useful for tc configuration
                 link = cls(name=sta.params['wlan'][wlan], node=sta,
                            tc=True, **params)

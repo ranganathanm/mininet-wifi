@@ -30,8 +30,8 @@ def topology():
     net.plotGraph(max_x=200, max_y=200)
 
     info("*** Starting WiFi Direct\n")
-    net.addLink(sta1, cls=wifiDirectLink)
-    net.addLink(sta2, cls=wifiDirectLink)
+    net.addLink(sta1, intf='sta1-wlan0', cls=wifiDirectLink)
+    net.addLink(sta2, intf='sta1-wlan0', cls=wifiDirectLink)
 
     info("*** Starting network\n")
     net.build()

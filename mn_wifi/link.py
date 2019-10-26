@@ -21,7 +21,7 @@ class IntfWireless(object):
     "Basic interface object that can configure itself."
 
     def __init__(self, name, node=None, port=None, link=None,
-                 mac=None, tc=False, **params):
+                 mac=None, **params):
         """name: interface name (e.g. h1-eth0)
            node: owning node (where this intf most likely lives)
            link: parent link if we're part of a link
@@ -36,13 +36,6 @@ class IntfWireless(object):
         # This saves an ip link/addr command per node
         if self.name == 'lo':
             self.ip = '127.0.0.1'
-        # Add to node (and move ourselves if necessary )
-        if not tc:
-            moveIntfFn = params.pop('moveIntfFn', None)
-            if moveIntfFn:
-                node.addIntf(self, port=port, moveIntfFn=moveIntfFn)
-            else:
-                node.addIntf(self, port=port)
 
         # Save params for future reference
         self.params = params
@@ -89,7 +82,7 @@ class IntfWireless(object):
                               format(intf, ssid, freq, ht_cap))
 
     def setFreq(self, freq, intf=None):
-        return self.iwdev_cmd('{} set freq {}' % (intf, freq))
+        return self.iwdev_cmd('{} set freq {}'.format(intf, freq))
 
     def get_freq(self, freq):
         return format(freq, '.3f').replace('.', '')
@@ -506,15 +499,9 @@ class _4address(IntfWireless):
             self.set_pos(node2)
 
         if cl_intfName not in cl.params['wlan']:
-            if port1:
-                wlan = cl.params['wlan'].index(port1)
-            else:
-                wlan = 0
 
-            if port2:
-                apwlan = ap.params['wlan'].index(port2)
-            else:
-                apwlan = 0
+            wlan = cl.params['wlan'].index(port1) if port1 else 0
+            apwlan = ap.params['wlan'].index(port2) if port2 else 0
 
             self.node = cl
             self.add4addrIface(wlan, cl_intfName)
@@ -522,8 +509,6 @@ class _4address(IntfWireless):
                                     '09' + cl.params['mac'][wlan][5:])
             self.setMAC(wlan)
             self.bring4addrIfaceUP()
-            _4addrAP(ap, apwlan)
-            _4addrClient(cl, wlan)
 
             cl.params['mode'].append(cl.params['mode'][apwlan])
             cl.params['channel'].append(cl.params['channel'][apwlan])
@@ -547,6 +532,8 @@ class _4address(IntfWireless):
             intfName2 = ap.params['wlan'][apwlan] + '.sta%s' % ap.wds
             intf2 = IntfWireless(name=intfName2, node=ap, link=self, **params2)
             ap.params['wlan'].append(intfName2)
+            _4addrAP(ap, (len(ap.params['wlan'])-1))
+            _4addrClient(cl, (len(cl.params['wlan'])-1))
 
         # All we are is dust in the wind, and our two interfaces
         self.intf1, self.intf2 = intf1, intf2
@@ -791,19 +778,21 @@ class managed(TCWirelessLink):
 class _4addrClient(TCWirelessLink):
     "managed class"
     def __init__(self, node, wlan):
+        self.ip = None
         self.name = node.params['wlan'][wlan]
         self.node = node
         self.params = {}
-        node.addIntf(self, port=wlan)
+        node.addIntf(self)
 
 
 class _4addrAP(TCWirelessLink):
     "managed class"
     def __init__(self, node, wlan):
+        self.ip = None
         self.name = node.params['wlan'][wlan]
         self.node = node
         self.params = {}
-        node.addIntf(self, port=wlan)
+        node.addIntf(self)
 
 
 class wmediumd(TCWirelessLink):
@@ -1019,12 +1008,7 @@ class ITSLink(IntfWireless):
     def __init__(self, node, intf=None, channel=161):
         "configure ieee80211p"
         self.node = node
-
-        if intf:
-            wlan = node.params['wlan'].index(intf)
-        else:
-            wlan = 0
-            intf = node.params['wlan'][wlan]
+        wlan = node.params['wlan'].index(intf)
 
         if isinstance(node.ints[wlan], master):
             self.kill_hostapd(node, intf)
@@ -1071,11 +1055,9 @@ class wifiDirectLink(IntfWireless):
 
     def __init__(self, node, intf=None):
         "configure wifi-direct"
-        if intf:
-            wlan = node.params['wlan'].index(intf)
-        else:
-            wlan = 0
-            intf = node.params['wlan'][wlan]
+        self.ip = None
+
+        wlan = node.params['wlan'].index(intf)
         self.name = intf
         node.addIntf(self, port=wlan)
 
@@ -1146,14 +1128,11 @@ class adhoc(IntfWireless):
         self.node = node
         self.ip6 = None
         self.mac = None
-        if intf:
-            wlan = node.params['wlan'].index(intf)
-            if 'mp' in intf:
-                self.iwdev_cmd('%s del' % node.params['wlan'][wlan])
-                node.params['wlan'][wlan] = intf.replace('mp', 'wlan')
-        else:
-            wlan = 0
-            intf = node.params['wlan'][wlan]
+
+        wlan = node.params['wlan'].index(intf)
+        if 'mp' in intf:
+            self.iwdev_cmd('%s del' % node.params['wlan'][wlan])
+            node.params['wlan'][wlan] = intf.replace('mp', 'wlan')
 
         self.name = intf
         node.addIntf(self, port=wlan)
@@ -1218,11 +1197,7 @@ class mesh(IntfWireless):
         self.ip = None
         self.ip6 = None
 
-        if intf:
-            wlan = node.params['wlan'].index(intf)
-        else:
-            wlan = 0
-            intf = node.params['wlan'][wlan]
+        wlan = node.params['wlan'].index(intf)
 
         node.params['ssid'][wlan] = ssid
         self.setMeshIface(node, mode, channel, wlan, intf)

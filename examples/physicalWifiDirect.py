@@ -34,7 +34,7 @@ def topology():
     info("*** Starting WiFi Direct\n")
     intf='wlxf4f26d193319'
     net.addLink(sta1, cls=physicalWifiDirectLink, intf=intf)
-    net.addLink(sta2, cls=wifiDirectLink)
+    net.addLink(sta2, cls=wifiDirectLink, intf='sta2-wlan0')
 
     info("*** Starting network\n")
     net.build()

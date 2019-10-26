@@ -1056,6 +1056,7 @@ class wifiDirectLink(IntfWireless):
     def __init__(self, node, intf=None):
         "configure wifi-direct"
         self.ip = None
+        self.node = node
 
         wlan = node.params['wlan'].index(intf)
         self.name = intf

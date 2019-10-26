@@ -813,8 +813,6 @@ class wmediumd(TCWirelessLink):
     def configureWmediumd(cls, fading_coefficient, noise_threshold, stations,
                           aps, cars, propagation_model, maclist):
         "Configure wmediumd"
-        from mn_wifi.node import AP
-
         intfrefs = []
         isnodeaps = []
         fading_coefficient = fading_coefficient
@@ -823,20 +821,18 @@ class wmediumd(TCWirelessLink):
         cls.nodes = stations + aps + cars
         for node in cls.nodes:
             node.wmIface = []
-            for wlan, intf in enumerate(node.intfs.values()):
-                if intf.name != 'lo':
-                    wif = wlan
-                    if isinstance(node, AP):
-                        wif -= 1
-                    node.wmIface.append(wif)
-                    node.wmIface[wif] = DynamicIntfRef(node, intf=wif)
-                    intfrefs.append(node.wmIface[wif])
-                    if (isinstance(intf, master) or
-                            (node in aps and (not isinstance(intf, managed)
-                                              and not isinstance(intf, adhoc)))):
-                        isnodeaps.append(1)
-                    else:
-                        isnodeaps.append(0)
+            for wlan in range(0, len(node.params['mac'])):
+                node.wmIface.append(wlan)
+                node.wmIface[wlan] = DynamicIntfRef(node, intf=wlan)
+                intfrefs.append(node.wmIface[wlan])
+                if wlan not in node.intfs:
+                    wlan += 1
+                if (isinstance(node.intfs[wlan], master)
+                    or (node in aps and (not isinstance(node.intfs[wlan], managed)
+                                         and not isinstance(node.intfs[wlan], adhoc)))):
+                    isnodeaps.append(1)
+                else:
+                    isnodeaps.append(0)
             for mac in maclist:
                 for key in mac:
                     if key == node:

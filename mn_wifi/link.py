@@ -1239,26 +1239,27 @@ class adhoc(IntfWireless):
         intf.ssid = ssid
         self.setChanParam(channel, intf)
         self.setModeParam(mode, intf)
-        self.configureAdhoc(node, intf, wlan, passwd, ht_cap)
+        self.configureAdhoc(intf, passwd, ht_cap)
 
         self.freq = intf.freq
         self.channel = intf.channel
         self.mode = intf.mode
+        self.range = intf.range
 
         if proto:
             manetProtocols(proto, node, wlan, **params)
 
-    def configureAdhoc(self, node, intf, wlan, passwd, ht_cap):
+    def configureAdhoc(self, intf, passwd, ht_cap):
         "Configure Wireless Ad Hoc"
         self.set_dev_type('ibss')
         self.ipLink('up')
 
         if passwd:
-            self.setSecuredAdhoc(node, intf, wlan, passwd)
+            self.setSecuredAdhoc(intf, passwd)
         else:
             self.join_ibss(intf, ht_cap)
 
-    def setSecuredAdhoc(self, node, intf, wlan, passwd):
+    def setSecuredAdhoc(self, intf, passwd):
         "Set secured adhoc"
         cmd = 'ctrl_interface=/var/run/wpa_supplicant GROUP=wheel\n'
         cmd += 'ap_scan=2\n'
@@ -1273,10 +1274,10 @@ class adhoc(IntfWireless):
         cmd += '         psk="%s"\n' % passwd
         cmd += '}'
 
-        fileName = '%s_%s.staconf' % (node.name, wlan)
+        fileName = '%s.staconf' % intf.name
         os.system('echo \'%s\' > %s' % (cmd, fileName))
-        pidfile = "mn%d_%s_%s_wpa.pid" % (os.getpid(), node.name, wlan)
-        node.wpa_cmd(pidfile, intf, wlan)
+        pidfile = "mn%d_%s_wpa.pid" % (os.getpid(), intf.node.name)
+        intf.node.wpa_cmd(pidfile, intf)
 
 
 class mesh(IntfWireless):
@@ -1438,7 +1439,7 @@ class Association(IntfWireless):
                 cls.associate_infra(intf, ap_intf)
                 if wmediumd_mode.mode == w_cst.WRONG_MODE:
                     if dist >= 0.01:
-                        wirelessLink(intf, wlan, dist)
+                        wirelessLink(intf, dist)
                 if intf.node != ap_intf.associatedStations:
                     ap_intf.associatedStations.append(intf.node)
             if not wmediumd_mode.mode == w_cst.INTERFERENCE_MODE:
@@ -1575,7 +1576,7 @@ class Association(IntfWireless):
                 cmd += '   phase2=\"autheap=MSCHAPV2\"\n'
         cmd += '}'
 
-        fileName = '%s_%s.staconf' % (intf.node.name, intf.id)
+        fileName = '%s.staconf' % intf.name
         os.system('echo \'%s\' > %s' % (cmd, fileName))
 
     @classmethod

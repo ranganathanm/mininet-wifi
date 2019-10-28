@@ -122,6 +122,12 @@ class IntfWireless(object):
         "Configure ourselves using ip link"
         return self.cmd('ip link set', self.name, *args)
 
+    def setMode(self, mode):
+        self.mode = mode
+
+    def setChannel(self, channel):
+        self.channel = channel
+
     def setIP(self, ipstr, prefixLen=None, **args):
         """Set our IP address"""
         # This is a sign that we should perhaps rethink our prefix
@@ -275,45 +281,6 @@ class IntfWireless(object):
         self.setParam(r, 'ipAddr', ipAddr=ipAddr)
 
         return r
-
-    def add_range_param(self, node, **params):
-        "Add Signal Range Param"
-        node.params['range'] = []
-        if 'range' in params:
-            range_list = str(params['range']).split(',')
-            node.range = True  # if range is set manually
-            for value in range_list:
-                wlan = range_list.index(value)
-                node.params['range'].append(float(value))
-                node.setRange(float(value), intf=node.params['wlan'][wlan])
-        else:
-            if 'model' in node.params:
-                range_ = DeviceRange(node).range
-                node.params['range'].append(range_)
-            else:
-                self.range = 0
-
-    def set_ssid(self, node, wlan):
-        if 'ssid' in node.params:
-            self.ssid = node.params['ssid']
-
-    def set_mode(self, node):
-        self.mode = node.params['mode']
-
-    def set_channel(self, node):
-        self.channel = node.params['channel']
-
-    def set_encrypt(self, node):
-        if 'encrypt' in node.params:
-            self.encrypt = node.params['encrypt']
-
-    def set_passwd(self, node):
-        if 'passwd' in node.params:
-            self.passwd = node.params['passwd']
-
-    def set_authmode(self, node):
-        if 'authmode' in node.params:
-            self.authmode = node.params['authmode']
 
     def delete(self):
         "Delete interface"
@@ -817,13 +784,11 @@ class master(TCWirelessLink):
         self.ip6 = ''
         self.link = None
 
-        self.add_range_param(node)
-        self.set_ssid(node, wlan)
-        self.set_mode(node)
-        self.set_channel(node)
-        self.set_encrypt(node)
-        self.set_passwd(node)
-        self.set_authmode(node)
+        args = ['radius_identity', 'radius_passwd', 'ssid', 'encrypt',
+                'passwd', 'mode', 'channel', 'authmode', 'range']
+        for arg in args:
+            if arg in node.params:
+                setattr(self, arg, node.params[arg])
 
 
 class managed(TCWirelessLink):
@@ -840,6 +805,8 @@ class managed(TCWirelessLink):
         self.scan_freq = ''
         self.freq_list = ''
         self.encrypt = ''
+        self.radius_identity = ''
+        self.radius_passwd = ''
         self.passwd = ''
         self.config = ''
         self.authmode = ''
@@ -855,7 +822,12 @@ class managed(TCWirelessLink):
         self.ip = node.params['ip']
         self.ip6 = node.params['ip6']
         self.link = None
-        self.add_range_param(node)
+
+        args = ['radius_identity', 'radius_passwd', 'ssid', 'encrypt',
+                'passwd', 'mode', 'channel', 'authmode', 'range']
+        for arg in args:
+            if arg in node.params:
+                setattr(self, arg, node.params[arg])
 
 
 class _4addrClient(TCWirelessLink):

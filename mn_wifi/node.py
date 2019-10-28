@@ -286,6 +286,7 @@ class Node_wifi(Node):
             elif isinstance(self.wintfs[wlan], adhoc):
                 self.cmd('iw dev %s ibss leave' % self.params['wlan'][wlan])
                 adhoc(self, channel=channel, intf=intf)
+        return self.intf(intf).setChannel(channel)
 
     def setTxPower(self, value, intf=None, setParam=True):
         "Set Tx Power"
@@ -480,6 +481,9 @@ class Node_wifi(Node):
            prefixLen: prefix length, e.g. 8 for /8 or 16M addrs
            kwargs: any additional arguments for intf.setIP"""
         return self.intf(intf).setIP(ip, prefixLen, **kwargs)
+
+    def setMode(self, mode, intf=None):
+        return self.intf(intf).setMode(mode)
 
     def setIP6(self, ip, prefixLen=64, intf=None, **kwargs):
         """Set the IP address for an interface.

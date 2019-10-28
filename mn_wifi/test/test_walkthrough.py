@@ -503,7 +503,7 @@ class testWalkthrough(unittest.TestCase):
         p.sendline('py ap1.wintfs[0].stationsInRange')
         p.expect('Station sta1')
         p.expect(self.prompt)
-        p.sendline('sta1.wintfs[0].ssid')
+        p.sendline('py sta1.wintfs[0].ssid')
         p.expect('ssid-ap1')
         p.expect(self.prompt)
         p.sendline('py sta1.wintfs[0].apsInRange')

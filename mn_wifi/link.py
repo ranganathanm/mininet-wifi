@@ -36,11 +36,7 @@ class IntfWireless(object):
         if self.name == 'lo':
             self.ip = '127.0.0.1'
 
-        moveIntfFn = params.pop('moveIntfFn', None)
-        if moveIntfFn:
-            node.addIntf(self, port=port, moveIntfFn=moveIntfFn)
-        else:
-            node.addIntf(self, port=port)
+        node.addWIntf(self, port=port)
 
         # Save params for future reference
         self.params = params
@@ -140,8 +136,8 @@ class IntfWireless(object):
             self.ip, self.prefixLen = ipstr, prefixLen
             return self.ipAddr('%s/%s' % (ipstr, prefixLen))
 
-    def setIPv6(self, ipstr, prefixLen=None, **args):
-        """Set our IP address"""
+    def setIP6(self, ipstr, prefixLen=None, **args):
+        """Set our IP6 address"""
         # This is a sign that we should perhaps rethink our prefix
         # mechanism and/or the way we specify IP addresses
         if '/' in ipstr:
@@ -790,7 +786,7 @@ class master(TCWirelessLink):
     "master class"
     def __init__(self, node, wlan, port=None):
         self.name = node.params['wlan'][wlan]
-        node.addWIntf(self, port=port)
+        node.addWAttr(self, port=port)
         self.node = node
         self.params = {}
         self.stationsInRange = {}
@@ -810,12 +806,12 @@ class master(TCWirelessLink):
         self.antennaGain = 5.0
         self.antennaHeight = 1.0
         self.id = wlan
-        self.ip = None
-        self.ip6 = None
+        self.ip = ''
+        self.ip6 = ''
         self.link = None
 
         self.add_range_param(node)
-        self.set_ssid(node, wlan)
+        #self.set_ssid(node, wlan)
         self.set_mode(node)
         self.set_channel(node)
         self.set_encrypt(node)
@@ -827,8 +823,8 @@ class managed(TCWirelessLink):
     "managed class"
     def __init__(self, node, wlan):
         self.name = node.params['wlan'][wlan]
-        node.addIntf(self, port=wlan)
         node.addWIntf(self, port=wlan)
+        node.addWAttr(self, port=wlan)
         self.node = node
         self.apsInRange = {}
         self.range = 0
@@ -837,6 +833,7 @@ class managed(TCWirelessLink):
         self.encrypt = ''
         self.passwd = ''
         self.config = ''
+        self.authmode = ''
         self.txpower = 14
         self.id = wlan
         self.rssi = -60
@@ -846,8 +843,8 @@ class managed(TCWirelessLink):
         self.antennaGain = 5.0
         self.antennaHeight = 1.0
         self.associatedTo = ''
-        self.ip = None
-        self.ip6 = None
+        self.ip = node.params['ip']
+        self.ip6 = node.params['ip6']
         self.link = None
         self.add_range_param(node)
 
@@ -855,34 +852,34 @@ class managed(TCWirelessLink):
 class _4addrClient(TCWirelessLink):
     "managed class"
     def __init__(self, node, wlan):
+        self.node = node
         self.ip = None
         self.mac = node.wintfs[wlan-1].mac
         self.range = node.wintfs[0].range
         self.txpower = 0
         self.name = node.params['wlan'][wlan]
-        self.node = node
         self.stationsInRange = {}
         self.associatedStations = []
         self.apsInRange = {}
         self.params = {}
-        node.addIntf(self)
         node.addWIntf(self)
+        node.addWAttr(self)
 
 
 class _4addrAP(TCWirelessLink):
     "managed class"
     def __init__(self, node, wlan):
+        self.node = node
         self.ip = None
         self.mac = node.wintfs[0].mac
         self.range = node.wintfs[0].range
         self.txpower = 0
         self.name = node.params['wlan'][wlan]
-        self.node = node
         self.stationsInRange = {}
         self.associatedStations = []
         self.params = {}
-        node.addIntf(self)
         node.addWIntf(self)
+        node.addWAttr(self)
 
 
 class wmediumd(TCWirelessLink):
@@ -1107,8 +1104,8 @@ class ITSLink(IntfWireless):
             self.add_ocb_mode(intf)
         else:
             self.set_ocb_mode()
-        node.addIntf(self, port=wlan)
         node.addWIntf(self, port=wlan)
+        node.addWAttr(self, port=wlan)
         self.configure_ocb(intf)
 
     def kill_hostapd(self, node, intf):
@@ -1142,9 +1139,7 @@ class wifiDirectLink(IntfWireless):
 
     def __init__(self, node, intf=None):
         "configure wifi-direct"
-        self.ip = None
         self.node = node
-        self.ip6 = None
 
         wlan = node.params['wlan'].index(intf)
         intf = node.wintfs[wlan]
@@ -1152,9 +1147,11 @@ class wifiDirectLink(IntfWireless):
         self.name = intf.name
         self.range = intf.range
         self.txpower = intf.txpower
+        self.ip6 = intf.ip6
+        self.ip = intf.ip
 
-        node.addIntf(self, port=wlan)
         node.addWIntf(self, port=wlan)
+        node.addWAttr(self, port=wlan)
 
         filename = self.get_filename(intf)
         self.config_(intf, filename)
@@ -1196,12 +1193,11 @@ class physicalWifiDirectLink(wifiDirectLink):
     def __init__(self, node, intf=None):
         "configure wifi-direct"
         self.name = intf
-        wlan = 0
-        node.addIntf(self, port=wlan)
-        node.addWIntf(self, port=wlan)
+        node.addWIntf(self)
+        node.addWAttr(self)
 
-        filename = self.get_filename(node, wlan, intf)
-        self.config_(node, wlan, filename)
+        filename = self.get_filename(intf)
+        self.config_(intf, filename)
 
         cmd = self.get_wpa_cmd(filename, intf)
         os.system(cmd)
@@ -1233,8 +1229,8 @@ class adhoc(IntfWireless):
 
         self.name = intf.name
 
-        node.addIntf(self, port=wlan)
         node.addWIntf(self, port=wlan)
+        node.addWAttr(self, port=wlan)
 
         intf.ssid = ssid
         self.setChanParam(channel, intf)
@@ -1301,12 +1297,13 @@ class mesh(IntfWireless):
         self.mac = intf.mac
         self.ip6 = intf.ip6
         self.ip = intf.ip
+
         self.range = intf.range
+        self.ssid = ssid
 
-        node.addIntf(self, port=wlan)
         node.addWIntf(self, port=wlan)
+        node.addWAttr(self, port=wlan)
 
-        intf.ssid = ssid
         self.setMeshIface(node, mode, channel, wlan, iface)
         self.configureMesh(node, ssid, ht_cap, passwd, iface)
 

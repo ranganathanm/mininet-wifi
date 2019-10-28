@@ -92,14 +92,14 @@ class CustomRange(object):
 
     range = 0
 
-    def __init__(self, node, wlan):
-        self.customSignalRange(node, wlan)
+    def __init__(self, intf):
+        self.customSignalRange(intf)
 
-    def customSignalRange(self, node, wlan):
+    def customSignalRange(self, intf):
         """Custom Signal Range
         mode: interface mode
         range: signal range (m)"""
-        mode = node.params['mode'][wlan]
+        mode = intf.mode
 
         if mode == 'a' or mode == 'g':
             self.range = 33
@@ -156,10 +156,10 @@ class DeviceTxPower (object):
 
     txpower = 0
 
-    def __init__(self, node, wlan):
+    def __init__(self, intf):
         "get txpower"
         model = node.params['model']
-        self.__getattribute__(model)(node, wlan)
+        self.__getattribute__(model)(intf)
 
     def DI524(self, **kwargs):
         """D-Link AirPlus G DI-524
@@ -169,18 +169,18 @@ class DeviceTxPower (object):
         self.txpower = 14
         return self.txpower
 
-    def TLWR740N(self, node, wlan):
+    def TLWR740N(self, intf):
         """TL-WR740N
             No REFERENCE!
         txPower = transmission power (dBm)"""
         self.txpower = 20
         return self.txpower
 
-    def WRT120N(self, node, wlan):
+    def WRT120N(self, intf):
         """CISCO WRT120N
            from http://downloads.linksys.com/downloads/datasheet/
            WRT120N_V10_DS_B-WEB.pdf"""
-        mode = node.params['mode'][wlan]
+        mode = intf.mode
 
         if mode == 'b':
             self.txpower = 21

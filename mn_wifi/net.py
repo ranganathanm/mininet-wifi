@@ -47,6 +47,7 @@ from mn_wifi.vanet import vanet
 from mn_wifi.sixLoWPAN.net import Mininet_6LoWPAN as sixlowpan
 from mn_wifi.sixLoWPAN.module import module as sixLoWPAN_module
 from mn_wifi.sixLoWPAN.link import sixLoWPANLink
+from mn_wifi.util import ipAdd6, netParse6
 
 
 sys.path.append(str(os.getcwd()) + '/mininet/')
@@ -60,10 +61,10 @@ class Mininet_wifi(Mininet):
                  accessPoint=OVSKernelAP, host=Host, station=Station,
                  car=Car, controller=DefaultController,
                  link=TCWirelessLink, intf=Intf, build=True, xterms=False,
-                 cleanup=False, ipBase='10.0.0.0/8', inNamespace=False,
-                 autoSetMacs=False, autoStaticArp=False, autoPinCpus=False,
-                 listenPort=None, waitConnected=False, ssid="new-ssid",
-                 mode="g", channel=1, wmediumd_mode=snr, roads=0,
+                 cleanup=False, ipBase='10.0.0.0/8', ip6Base='2001:0:0:0:0:0:0:0/64',
+                 inNamespace=False, autoSetMacs=False, autoStaticArp=False,
+                 autoPinCpus=False, listenPort=None, waitConnected=False,
+                 ssid="new-ssid", mode="g", channel=1, wmediumd_mode=snr, roads=0,
                  fading_coefficient=0, autoAssociation=True,
                  allAutoAssociation=True, driver='nl80211',
                  autoSetPositions=False, configureWiFiDirect=False,
@@ -100,8 +101,11 @@ class Mininet_wifi(Mininet):
         self.intf = intf
         self.cleanup = cleanup
         self.ipBase = ipBase
+        self.ip6Base = ip6Base
         self.ipBaseNum, self.prefixLen = netParse(self.ipBase)
+        self.ip6BaseNum, self.prefixLen6 = netParse6(self.ip6Base)
         self.nextIP = 1  # start for address allocation
+        self.nextIP6 = 1  # start for address allocation
         self.nextPos_sta = 1 # start for sta position allocation
         self.nextPos_ap = 1  # start for ap position allocation
         self.inNamespace = inNamespace
@@ -295,6 +299,10 @@ class Mininet_wifi(Mininet):
                                 ipBaseNum=self.ipBaseNum,
                                 prefixLen=self.prefixLen) +
                           '/%s' % self.prefixLen,
+                    'ip6': ipAdd6(self.nextIP6,
+                                ipBaseNum=self.ip6BaseNum,
+                                prefixLen=self.prefixLen6) +
+                          '/%s' % self.prefixLen6,
                     'channel': self.channel,
                     'mode': self.mode
                    }
@@ -308,6 +316,7 @@ class Mininet_wifi(Mininet):
             defaults['cores'] = self.nextCore
             self.nextCore = (self.nextCore + 1) % self.numCores
         self.nextIP += 1
+        self.nextIP6 += 1
         self.nextPos_sta += 2
 
         if not cls:
@@ -339,7 +348,11 @@ class Mininet_wifi(Mininet):
         defaults = {'ip': ipAdd(self.nextIP,
                                 ipBaseNum=self.ipBaseNum,
                                 prefixLen=self.prefixLen) +
-                          '/%s' % self.prefixLen
+                          '/%s' % self.prefixLen,
+                    'ip6': ipAdd6(self.nextIP,
+                                  ipBaseNum=self.ipBaseNum,
+                                  prefixLen=self.prefixLen) +
+                           '/%s' % self.prefixLen,
                     }
 
         if self.autoSetMacs:
@@ -1392,29 +1405,6 @@ class Mininet_wifi(Mininet):
             else:
                 node.params['wlan'].append(node.name + '-wlan' + str(wlan))
             node.params.pop("wlans", None)
-
-        if not isinstance(node, AP) or 'ip' in node.params:
-            array_ = ['ip']
-            for param in array_:
-                node.params[param] = []
-                if param in params:
-                    list = params[param].split(',')
-                    for value in list:
-                        node.params[param].append(value)
-                        if param == 'mac':
-                            append_ = ''
-                        else:
-                            append_ = '0/0'
-                        if len(list) != params['wlans']:
-                            for _ in range(len(list), params['wlans']):
-                                node.params[param].append(append_)
-                elif autoSetMacs:
-                    for n in range(params['wlans']):
-                        node.params[param].append(append_)
-                        node.params[param][n] = params[param]
-                else:
-                    for _ in range(params['wlans']):
-                        node.params[param].append('')
 
         # Equipment Model
         model = ("%s" % params.pop('model', {}))

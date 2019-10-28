@@ -142,24 +142,19 @@ class Node_wifi(Node):
         self.cmd('iw dev %s set type managed' % (self.params['wlan'][wlan]))
         managed(self, wlan)
 
-    def setMasterMode(self, intf=None, ssid=None, **kwargs):
+    def setMasterMode(self, intf=None, ssid='new-ssid', **kwargs):
         "set Interface to AP mode"
         if not ssid:
             ssid = self.name + '-ssid'
         wlan = self.get_wlan(intf)
-        master(self, wlan)
+        master(self, wlan, port=wlan)
+        intf = self.wintfs[wlan]
 
-        self.wintfs[wlan].ssid = ssid
+        if int(intf.range) == 0:
+            intf.range = intf.node.getRange(intf=intf.name)
+
+        intf.ssid = ssid
         self.params['driver'] = 'nl80211'
-        self.params['stationsInRange'] = {}
-        self.params['apsInRange'] = {}
-        self.params.pop('rssi', None)
-        self.params.pop('associatedTo', None)
-
-        for kwarg in kwargs:
-            if kwarg not in self.params:
-                self.params[kwarg] = []
-                self.params[kwarg].append(kwargs[kwarg])
 
         aps = [self]
         AccessPoint(aps, 'nl80211', setMaster=True)
@@ -439,7 +434,7 @@ class Node_wifi(Node):
             return max(self.wports.values()) + 1
         return self.portBase
 
-    def addWIntf(self, intf, port=None):
+    def addWAttr(self, intf, port=None):
         """Add an wireless interface.
            intf: interface
            port: port number (optional, typically OpenFlow port number)
@@ -449,7 +444,7 @@ class Node_wifi(Node):
         self.wintfs[port] = intf
         self.wports[intf] = port
 
-    def addIntf(self, intf, port=None, moveIntfFn=moveIntf):
+    def addWIntf(self, intf, port=None):
         """Add an interface.
            intf: interface
            port: port number (optional, typically OpenFlow port number)
@@ -462,11 +457,6 @@ class Node_wifi(Node):
         debug('\n')
         debug('added intf %s (%d) to node %s\n' % (
             intf, port, self.name))
-        if (not isinstance(self, Station) and (not isinstance(self, Car))
-                and (not isinstance(self, AP))):
-            if self.inNamespace:
-                debug('moving', intf, 'into namespace for', self.name, '\n')
-                moveIntfFn(intf.name, self)
 
     def connectionsTo(self, node):
         "Return [ intf1, intf2... ] for all intfs that connect self to node."
@@ -491,12 +481,12 @@ class Node_wifi(Node):
            kwargs: any additional arguments for intf.setIP"""
         return self.intf(intf).setIP(ip, prefixLen, **kwargs)
 
-    def setIPv6(self, ip, prefixLen=64, intf=None, **kwargs):
+    def setIP6(self, ip, prefixLen=64, intf=None, **kwargs):
         """Set the IP address for an interface.
            intf: intf or intf name
            ip: IP address as a string
            kwargs: any additional arguments for intf.setIP"""
-        return self.intf(intf).setIPv6(ip, prefixLen, **kwargs)
+        return self.intf(intf).setIP6(ip, prefixLen, **kwargs)
 
     def config(self, mac=None, ip=None, ipv6=None,
                defaultRoute=None, lo='up', **_params):
@@ -510,9 +500,6 @@ class Node_wifi(Node):
         # the superclass config method here as follows:
         # r = Parent.config( **_params )
         r = {}
-        if isinstance(self, Station) or isinstance(self, Car):
-            if len(ip) > 1:
-                ip = ip[0]
         if not isinstance(self, Station) and not isinstance(self, Car):
             self.setParam(r, 'setMAC', mac=mac)
         self.setParam(r, 'setIP', ip=ip)
@@ -1142,12 +1129,13 @@ class AccessPoint(AP):
 
     def setIPMAC(self, intf):
         if intf.mac:
-            intf.setMAC(intf)
+            intf.setMAC(intf.mac)
         else:
             intf.mac = intf.node.getMAC(intf)
 
         if intf.mac:
             self.checkNetworkManager(intf)
+
         if 'inNamespace' in intf.node.params and 'ip' in intf.node.params:
             intf.node.setIP(intf.node.params['ip'], intf=intf.name)
 

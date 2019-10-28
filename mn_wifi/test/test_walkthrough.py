@@ -92,7 +92,7 @@ class testWalkthrough(unittest.TestCase):
         p = pexpect.spawn('mn --wifi')
         p.expect(self.prompt)
         sleep(3)
-        p.sendline('sta1 ping -c 1 sta2')
+        p.sendline('sta1 ping -c1 sta2')
         p.expect('1 packets transmitted, 1 received')
         p.expect(self.prompt)
         p.sendline('pingall')

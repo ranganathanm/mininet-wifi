@@ -889,31 +889,31 @@ class AccessPoint(AP):
         if intf.ssid:
             if intf.encrypt and 'config' not in intf.node.params:
                 if intf.encrypt == 'wpa':
-                    intf.node.auth_algs = 1
+                    intf.auth_algs = 1
                     if 'ieee80211r' in intf.node.params \
                             and intf.node.params['ieee80211r'] == 'yes':
-                        intf.node.wpa_key_mgmt = 'FT-EAP'
+                        intf.wpa_key_mgmt = 'FT-EAP'
                     else:
-                        intf.node.wpa_key_mgmt = 'WPA-EAP'
-                    intf.node.rsn_pairwise = 'TKIP CCMP'
-                    intf.node.wpa_passphrase = intf.passwd
+                        intf.wpa_key_mgmt = 'WPA-EAP'
+                    intf.rsn_pairwise = 'TKIP CCMP'
+                    intf.wpa_passphrase = intf.passwd
                 elif intf.encrypt == 'wpa2' \
                         or intf.encrypt == 'wpa3':
-                    intf.node.auth_algs = 1
+                    intf.auth_algs = 1
                     if 'ieee80211r' in intf.node.params \
                             and intf.node.params['ieee80211r'] == 'yes' \
                             and not intf.authmode:
-                        intf.node.wpa_key_mgmt = 'FT-PSK'
+                        intf.wpa_key_mgmt = 'FT-PSK'
                     elif intf.authmode == '8021x':
-                        intf.node.wpa_key_mgmt = 'WPA-EAP'
+                        intf.wpa_key_mgmt = 'WPA-EAP'
                     else:
-                        intf.node.wpa_key_mgmt = 'WPA-PSK'
-                    intf.node.rsn_pairwise = 'CCMP'
+                        intf.wpa_key_mgmt = 'WPA-PSK'
+                    intf.rsn_pairwise = 'CCMP'
                     if not intf.authmode:
-                        intf.node.wpa_passphrase = intf.passwd
+                        intf.wpa_passphrase = intf.passwd
                 elif intf.encrypt == 'wep':
-                    intf.node.auth_algs = 2
-                    intf.node.wep_key0 = intf.passwd
+                    intf.auth_algs = 2
+                    intf.wep_key0 = intf.passwd
 
             if intf.mode == 'adhoc':
                 adhoc(intf.node, wlan)
@@ -924,7 +924,7 @@ class AccessPoint(AP):
         cmd = ''
         if intf.mode == 'n':
             if 'band' in intf.node.params:
-                if intf.node.params['band'] == '5' or intf.node.params['band'] == 5:
+                if intf.band == '5' or intf.band == 5:
                     cmd = cmd + ("\nhw_mode=a")
                 else:
                     cmd = cmd + ("\nhw_mode=g")
@@ -955,7 +955,7 @@ class AccessPoint(AP):
         else:
             cmd = cmd + ("interface=%s" % intf.name)
 
-        cmd = cmd + ("\ndriver=%s" % intf.node.params['driver'])
+        cmd = cmd + ("\ndriver=%s" % intf.driver)
         cmd = cmd + ("\nssid=%s" % intf.ssid)
         cmd = cmd + ('\nwds_sta=1')
 
@@ -967,11 +967,11 @@ class AccessPoint(AP):
             if arg in intf.node.params:
                 cmd = cmd + ('\n%s=%s' % (arg, intf.node.params[arg]))
 
-        if 'ht_capab' in intf.node.params:
-            cmd = cmd + ('\nht_capab=%s' % intf.node.params['ht_capab'])
-        if 'beacon_int' in intf.node.params:
-            cmd = cmd + ('\nbeacon_int=%s' % intf.node.params['beacon_int'])
-        if 'isolate_clients' in intf.node.params:
+        if intf.ht_capab:
+            cmd = cmd + ('\nht_capab=%s' % intf.ht_capab)
+        if intf.beacon_int:
+            cmd = cmd + ('\nbeacon_int=%s' % intf.beacon_int)
+        if intf.isolate_clients:
             cmd = cmd + ('\nap_isolate=1')
         if 'config' in intf.node.params:
             config = intf.node.params['config']
@@ -985,7 +985,7 @@ class AccessPoint(AP):
                 cmd = cmd + ("\nieee8021x=1")
                 cmd = cmd + ("\nwpa_key_mgmt=WPA-EAP")
                 if intf.encrypt:
-                    cmd = cmd + ("\nauth_algs=%s" % intf.node.auth_algs)
+                    cmd = cmd + ("\nauth_algs=%s" % intf.auth_algs)
                     cmd = cmd + ("\nwpa=2")
                 cmd = cmd + ('\neap_server=0')
                 cmd = cmd + ('\neapol_version=2')
@@ -1005,7 +1005,7 @@ class AccessPoint(AP):
             else:
                 if intf.encrypt:
                     if 'wpa' in intf.encrypt:
-                        cmd = cmd + ("\nauth_algs=%s" % intf.node.auth_algs)
+                        cmd = cmd + ("\nauth_algs=%s" % intf.auth_algs)
                         if intf.encrypt == 'wpa2' \
                                 or intf.encrypt == 'wpa3':
                             cmd = cmd + ("\nwpa=2")
@@ -1014,13 +1014,13 @@ class AccessPoint(AP):
                         if intf.encrypt == 'wpa3':
                             cmd = cmd + ("\nwpa_key_mgmt=WPA-PSK SAE")
                         else:
-                            cmd = cmd + ("\nwpa_key_mgmt=%s" % intf.node.wpa_key_mgmt)
-                        cmd = cmd + ("\nwpa_pairwise=%s" % intf.node.rsn_pairwise)
-                        cmd = cmd + ("\nwpa_passphrase=%s" % intf.node.wpa_passphrase)
+                            cmd = cmd + ("\nwpa_key_mgmt=%s" % intf.wpa_key_mgmt)
+                        cmd = cmd + ("\nwpa_pairwise=%s" % intf.rsn_pairwise)
+                        cmd = cmd + ("\nwpa_passphrase=%s" % intf.wpa_passphrase)
                     elif intf.encrypt == 'wep':
-                        cmd = cmd + ("\nauth_algs=%s" % intf.node.auth_algs)
+                        cmd = cmd + ("\nauth_algs=%s" % intf.auth_algs)
                         cmd = cmd + ("\nwep_default_key=%s" % 0)
-                        cmd = cmd + self.verifyWepKey(intf.node.wep_key0)
+                        cmd = cmd + self.verifyWepKey(intf.wep_key0)
 
                 if intf.mode == 'ac':
                     cmd = cmd + ("\nwmm_enabled=1")
@@ -1031,9 +1031,8 @@ class AccessPoint(AP):
 
                 if 'ieee80211r' in intf.node.params and \
                                 intf.node.params['ieee80211r'] is 'yes':
-                    if 'mobility_domain' in intf.node.params:
-                        cmd = cmd + ("\nmobility_domain=%s" %
-                                     intf.node.params['mobility_domain'])
+                    if intf.mobility_domain:
+                        cmd = cmd + ("\nmobility_domain=%s" % intf.mobility_domain)
                         # cmd = cmd + ("\nown_ip_addr=127.0.0.1")
                         cmd = cmd + ("\nnas_identifier=%s.example.com"
                                      % intf.node.name)

@@ -294,8 +294,8 @@ class IntfWireless(object):
                 self.range = 0
 
     def set_ssid(self, node, wlan):
-        if isinstance(node.params['ssid'], str):
-            self.ssid = node.params['ssid'].split(',')[wlan]
+        if 'ssid' in node.params:
+            self.ssid = node.params['ssid']
 
     def set_mode(self, node):
         self.mode = node.params['mode']
@@ -793,12 +793,19 @@ class master(TCWirelessLink):
         self.associatedStations = []
         self.range = 0
         self.txpower = 14
+        self.driver = 'nl80211'
+        self.ht_capab = ''
+        self.beacon_int = ''
+        self.isolate_clients = ''
         self.mac = ''
         self.ssid = ''
         self.encrypt = ''
+        self.wpa_key_mgmt = ''
         self.passwd = ''
         self.authmode = ''
         self.config = ''
+        self.rsn_pairwise = ''
+        self.active_scan = ''
         self.radius_server = ''
         self.mode = 'g'
         self.freq = 2.412
@@ -811,7 +818,7 @@ class master(TCWirelessLink):
         self.link = None
 
         self.add_range_param(node)
-        #self.set_ssid(node, wlan)
+        self.set_ssid(node, wlan)
         self.set_mode(node)
         self.set_channel(node)
         self.set_encrypt(node)
@@ -830,6 +837,8 @@ class managed(TCWirelessLink):
         self.range = 0
         self.ssid = ''
         self.mac = ''
+        self.scan_freq = ''
+        self.freq_list = ''
         self.encrypt = ''
         self.passwd = ''
         self.config = ''
@@ -1546,14 +1555,14 @@ class Association(IntfWireless):
                 if ap_intf.encrypt == 'wpa3':
                     encrypt = 'wpa2'
                 cmd += '   proto=%s\n' % encrypt.upper()
-                cmd += '   pairwise=%s\n' % ap_intf.node.rsn_pairwise
-                if 'active_scan' in intf.node.params and intf.node.params['active_scan'] == 1:
+                cmd += '   pairwise=%s\n' % ap_intf.rsn_pairwise
+                if ap_intf.active_scan:
                     cmd += '   scan_ssid=1\n'
-                if 'scan_freq' in intf.node.params and intf.node.params['scan_freq'][intf.id]:
-                    cmd += '   scan_freq=%s\n' % intf.node.params['scan_freq'][intf.id]
-                if 'freq_list' in intf.node.params and intf.node.params['freq_list'][intf.id]:
-                    cmd += '   freq_list=%s\n' % intf.node.params['freq_list'][intf.id]
-            wpa_key_mgmt = ap_intf.node.wpa_key_mgmt
+                if intf.scan_freq:
+                    cmd += '   scan_freq=%s\n' % intf.scan_freq
+                if intf.freq_list:
+                    cmd += '   freq_list=%s\n' % intf.freq_list
+            wpa_key_mgmt = ap_intf.wpa_key_mgmt
             if ap_intf.encrypt == 'wpa3':
                 wpa_key_mgmt = 'SAE'
             cmd += '   key_mgmt=%s\n' % wpa_key_mgmt
@@ -1561,15 +1570,13 @@ class Association(IntfWireless):
                 if 'bgscan_module' not in intf.node.params:
                     intf.node.params['bgscan_module'] = 'simple'
                 bgscan = 'bgscan=\"%s:%d:%d:%d\"' % \
-                         (intf.node.params['bgscan_module'],
-                          intf.node.params['s_inverval'],
-                          intf.node.params['bgscan_threshold'],
-                          intf.node.params['l_interval'])
+                         (intf.bgscan_module, intf.s_inverval,
+                          intf.bgscan_threshold, intf.l_interval)
                 cmd += '   %s\n' % bgscan
-            if 'authmode' in ap_intf.node.params and ap_intf.node.params['authmode'][0] == '8021x':
+            if ap_intf.authmode == '8021x':
                 cmd += '   eap=PEAP\n'
-                cmd += '   identity=\"%s\"\n' % intf.node.params['radius_identity']
-                cmd += '   password=\"%s\"\n' % intf.node.params['radius_passwd']
+                cmd += '   identity=\"%s\"\n' % intf.radius_identity
+                cmd += '   password=\"%s\"\n' % intf.radius_passwd
                 cmd += '   phase2=\"autheap=MSCHAPV2\"\n'
         cmd += '}'
 

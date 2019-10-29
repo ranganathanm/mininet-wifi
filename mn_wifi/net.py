@@ -789,8 +789,7 @@ class Mininet_wifi(Mininet):
                         and not isinstance(intf, mesh) \
                         and not isinstance(intf, wifiDirectLink):
                     if isinstance(node, Station) and not hasattr(node, 'range'):
-                        node.wintfs[wlan].range = \
-                            int(node.wintfs[wlan].range) / 5
+                        intf.range = int(intf.range) / 5
 
         if self.allAutoAssociation:
             if self.autoAssociation and not self.configureWiFiDirect:

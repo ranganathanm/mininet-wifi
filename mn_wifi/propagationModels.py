@@ -322,7 +322,6 @@ class GetSignalRange(object):
 
         self.dist = math.pow(10, ((-ppm.noise_threshold + gains -
                                    20 * math.log10(f) - lF * nFloors + 28)/N))
-
         return self.dist
 
 

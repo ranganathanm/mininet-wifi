@@ -807,19 +807,23 @@ class managed(TCWirelessLink):
         self.node = node
         self.apsInRange = {}
         self.range = 0
-        self.ssid = None
-        self.mac = None
-        self.scan_freq = None
         self.active_scan = None
-        self.freq_list = None
-        self.encrypt = None
-        self.radius_identity = None
-        self.stationsInRange = None
+        self.associatedTo = None
         self.associatedStations = None
-        self.radius_passwd = None
-        self.passwd = None
-        self.config = None
         self.authmode = None
+        self.config = None
+        self.encrypt = None
+        self.freq_list = None
+        self.ip = None
+        self.ip6 = None
+        self.link = None
+        self.mac = None
+        self.passwd = None
+        self.radius_identity = None
+        self.radius_passwd = None
+        self.scan_freq = None
+        self.ssid = None
+        self.stationsInRange = None
         self.bgscan_module = 'simple'
         self.s_inverval = 0
         self.bgscan_threshold = 0
@@ -832,10 +836,6 @@ class managed(TCWirelessLink):
         self.channel = 1
         self.antennaGain = 5.0
         self.antennaHeight = 1.0
-        self.associatedTo = ''
-        self.ip = node.params['ip']
-        self.ip6 = node.params['ip6']
-        self.link = None
 
         for key in self.__dict__.keys():
             if key in node.params:
@@ -1095,35 +1095,37 @@ class ITSLink(IntfWireless):
         "configure ieee80211p"
         self.node = node
         wlan = node.params['wlan'].index(intf)
+        intf = node.wintfs[wlan]
 
-        if isinstance(node.ints[wlan], master):
-            self.kill_hostapd(node, intf)
+        if isinstance(intf, master):
+            self.kill_hostapd(intf)
 
-        node.wintfs[wlan].channel = channel
-        node.wintfs[wlan].freq = node.get_freq(intf)
-        self.name = intf
-        if isinstance(node.ints[wlan], master):
-            intf = '%s-ocb' % node.name
+        intf.channel = channel
+        intf.freq = node.get_freq(intf)
+        self.range = intf.range
+        self.name = intf.name
+        self.mac = intf.mac
+
+        if isinstance(intf, master):
+            intf.name = '%s-ocb' % node.name
             self.add_ocb_mode(intf)
         else:
             self.set_ocb_mode()
-        node.addWIntf(self, port=wlan)
+        #node.addWIntf(self, port=wlan)
         node.addWAttr(self, port=wlan)
         self.configure_ocb(intf)
 
-    def kill_hostapd(self, node, intf):
-        node.setManagedMode(intf)
+    def kill_hostapd(self, intf):
+        intf.node.setManagedMode(intf)
 
-    def add_ocb_mode(self, new_name):
+    def add_ocb_mode(self, intf):
         "Set OCB Interface"
-        wlan = self.node.params['wlan'].index(self.name)
         self.ipLink('down')
         self.node.delIntf(self.name)
-        self.add_dev_type(new_name, 'ocb')
+        self.add_dev_type(intf.name, 'ocb')
         # we set the port to remove the existing wlan from node.intfs
-        IntfWireless(name=new_name, node=self.node, port=1)
-        self.name = new_name
-        self.setMAC(self.node.params['mac'][wlan])
+        IntfWireless(name=intf.name, node=self.node, port=1)
+        self.setMAC(intf.name)
         self.ipLink('up')
 
     def set_ocb_mode(self):
@@ -1198,6 +1200,14 @@ class physicalWifiDirectLink(wifiDirectLink):
         self.name = intf
         node.addWIntf(self)
         node.addWAttr(self)
+
+        for wlan, intf in enumerate(node.wintfs.values()):
+            if intf.name == self.name:
+                intf = intf
+                break
+
+        self.txpower = node.wintfs[0].txpower
+        self.mac = None
 
         filename = self.get_filename(intf)
         self.config_(intf, filename)

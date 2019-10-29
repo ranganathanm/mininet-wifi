@@ -31,7 +31,7 @@ from sys import version_info as py_version_info
 from mininet.log import info, error, debug
 from mininet.util import (quietRun, errRun, errFail, mountCgroups,
                           numCores, retry, Python3, getincrementaldecoder,
-                          moveIntf)
+                          moveIntf, BaseString)
 from mininet.node import Node
 from mininet.moduledeps import moduleDeps, pathCheck, TUN
 from mininet.link import Intf, OVSIntf
@@ -126,20 +126,20 @@ class Node_wifi(Node):
         adhoc(self, **kwargs)
 
     def setManagedMode(self, intf=None):
-        if intf:
+
+        if isinstance(intf, BaseString):
             wlan = self.params['wlan'].index(intf)
-        else:
-            wlan = 0
-            intf = self.params['wlan'][wlan]
-        if isinstance(self.wintfs[wlan], mesh):
-            self.cmd('iw dev %s del' % self.params['wlan'][wlan])
-            intf = '%s-wlan%s' % (self, wlan)
-            self.params['wlan'][wlan] = intf
-        elif isinstance(self.wintfs[wlan], master):
-            apconfname = "mn%d_%s.apconf" % (os.getpid(), intf)
+            intf = self.wintfs[wlan]
+
+        if isinstance(intf, mesh):
+            self.cmd('iw dev %s del' % intf.name)
+            intf.name = '%s-wlan%s' % (self, intf.id)
+            self.params['wlan'][wlan] = intf.name
+        elif isinstance(intf, master):
+            apconfname = "mn%d_%s.apconf" % (os.getpid(), intf.name)
             self.cmd('rm %s' % apconfname)
             self.cmd('pkill -f \'%s\'' % apconfname)
-        self.cmd('iw dev %s set type managed' % (self.params['wlan'][wlan]))
+        self.cmd('iw dev %s set type managed' % intf.name)
         managed(self, wlan)
 
     def setMasterMode(self, intf=None, ssid='new-ssid', **kwargs):
@@ -1210,7 +1210,7 @@ class AccessPoint(AP):
             intf = ap.params['phywlan']
             ap.cmd('ip link set %s down' % intf)
             ap.cmd('ip link set %s up' % intf)
-        apconfname = "mn%d_%s-wlan%s.apconf" % (os.getpid(), ap.name, phy)
+        apconfname = "mn%d_%s-wlan%s.apconf" % (os.getpid(), ap.name, phy+1)
         content = cmd + ("\' > %s" % apconfname)
         ap.cmd(content)
         cmd = self.get_hostapd_cmd(ap, phy)
@@ -1226,7 +1226,7 @@ class AccessPoint(AP):
             exit(1)
 
     def get_hostapd_cmd(self, ap, phy):
-        apconfname = "mn%d_%s-wlan%s.apconf" % (os.getpid(), ap.name, phy)
+        apconfname = "mn%d_%s-wlan%s.apconf" % (os.getpid(), ap.name, phy+1)
         hostapd_flags = ''
         if 'hostapd_flags' in ap.params:
             hostapd_flags = ap.params['hostapd_flags']

@@ -785,18 +785,15 @@ class master(TCWirelessLink):
         self.radius_server = ''
         self.link = None
 
-        args = ['radius_identity', 'radius_passwd', 'ssid', 'encrypt',
-                'passwd', 'mode', 'channel', 'authmode', 'range',
-                'isolate_clients', 'ip', 'ip6', 'mac']
-        for arg in args:
-            if arg in node.params:
-                if isinstance(node.params[arg], BaseString):
-                    setattr(self, arg, node.params[arg])
-                elif isinstance(node.params[arg], list):
-                    arg_ = node.params[arg][0].split(',')
-                    setattr(self, arg, arg_[wlan])
-                elif isinstance(node.params[arg], int):
-                    setattr(self, arg, node.params[arg])
+        for key in self.__dict__.keys():
+            if key in node.params:
+                if isinstance(node.params[key], BaseString):
+                    setattr(self, key, node.params[key])
+                elif isinstance(node.params[key], list):
+                    arg_ = node.params[key][0].split(',')
+                    setattr(self, key, arg_[wlan])
+                elif isinstance(node.params[key], int):
+                    setattr(self, key, node.params[key])
 
 
 class managed(TCWirelessLink):
@@ -818,6 +815,10 @@ class managed(TCWirelessLink):
         self.passwd = ''
         self.config = ''
         self.authmode = ''
+        self.bgscan_module = 'simple'
+        self.s_inverval = 5
+        self.bgscan_threshold = -60
+        self.l_interval = 10
         self.txpower = 14
         self.id = wlan
         self.rssi = -60
@@ -831,12 +832,15 @@ class managed(TCWirelessLink):
         self.ip6 = node.params['ip6']
         self.link = None
 
-        args = ['radius_identity', 'radius_passwd', 'ssid', 'encrypt',
-                'passwd', 'mode', 'channel', 'authmode', 'range',
-                'mac']
-        for arg in args:
-            if arg in node.params:
-                setattr(self, arg, node.params[arg])
+        for key in self.__dict__.keys():
+            if key in node.params:
+                if isinstance(node.params[key], BaseString):
+                    setattr(self, key, node.params[key])
+                elif isinstance(node.params[key], list):
+                    arg_ = node.params[key][0].split(',')
+                    setattr(self, key, arg_[wlan])
+                elif isinstance(node.params[key], int):
+                    setattr(self, key, node.params[key])
 
 
 class _4addrClient(TCWirelessLink):

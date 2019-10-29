@@ -1548,7 +1548,7 @@ class Association(IntfWireless):
                     encrypt = 'wpa2'
                 cmd += '   proto=%s\n' % encrypt.upper()
                 cmd += '   pairwise=%s\n' % ap_intf.rsn_pairwise
-                if ap_intf.active_scan:
+                if intf.active_scan:
                     cmd += '   scan_ssid=1\n'
                 if intf.scan_freq:
                     cmd += '   scan_freq=%s\n' % intf.scan_freq

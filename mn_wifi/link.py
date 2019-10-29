@@ -847,6 +847,7 @@ class _4addrClient(TCWirelessLink):
         self.mac = node.wintfs[wlan-1].mac
         self.range = node.wintfs[0].range
         self.txpower = 0
+        self.antennaGain = 5.0
         self.name = node.params['wlan'][wlan]
         self.stationsInRange = {}
         self.associatedStations = []
@@ -864,6 +865,7 @@ class _4addrAP(TCWirelessLink):
         self.mac = node.wintfs[0].mac
         self.range = node.wintfs[0].range
         self.txpower = 0
+        self.antennaGain = 5.0
         self.name = node.params['wlan'][wlan]
         self.stationsInRange = {}
         self.associatedStations = []

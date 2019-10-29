@@ -1310,7 +1310,7 @@ class Mininet_wifi(Mininet):
             for wlan, intf in enumerate(sta.wintfs.values()):
                 if not intf.associatedTo:
                     sta.pexec('iw dev %s connect %s %s'
-                              % (intf.name, ap.wints[0].ssid, ap.wints[0].mac))
+                              % (intf.name, ap.wintfs[0].ssid, ap.wintfs[0].mac))
                     intf.associatedTo = ap
                     ap.wintfs[0].associatedStations.append(sta)
 

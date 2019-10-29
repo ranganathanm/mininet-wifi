@@ -767,7 +767,6 @@ class master(TCWirelessLink):
         self.txpower = 14
         self.ieee80211r = ''
         self.band = ''
-        self.active_scan = ''
         self.authmode = ''
         self.beacon_int = ''
         self.config = ''
@@ -811,6 +810,7 @@ class managed(TCWirelessLink):
         self.ssid = ''
         self.mac = ''
         self.scan_freq = ''
+        self.active_scan = ''
         self.freq_list = ''
         self.encrypt = ''
         self.radius_identity = ''

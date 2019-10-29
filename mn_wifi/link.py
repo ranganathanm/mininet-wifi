@@ -765,6 +765,8 @@ class master(TCWirelessLink):
         self.freq = 2.412
         self.range = 0
         self.txpower = 14
+        self.ieee80211r = ''
+        self.band = ''
         self.active_scan = ''
         self.authmode = ''
         self.beacon_int = ''
@@ -779,6 +781,7 @@ class master(TCWirelessLink):
         self.mac = ''
         self.mode = 'g'
         self.passwd = ''
+        self.shared_secret = ''
         self.ssid = ''
         self.wpa_key_mgmt = ''
         self.rsn_pairwise = ''
@@ -816,9 +819,9 @@ class managed(TCWirelessLink):
         self.config = ''
         self.authmode = ''
         self.bgscan_module = 'simple'
-        self.s_inverval = 5
-        self.bgscan_threshold = -60
-        self.l_interval = 10
+        self.s_inverval = 0
+        self.bgscan_threshold = 0
+        self.l_interval = 0
         self.txpower = 14
         self.id = wlan
         self.rssi = -60

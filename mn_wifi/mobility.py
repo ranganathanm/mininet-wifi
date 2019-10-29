@@ -134,14 +134,14 @@ class mobility(object):
     def ap_out_of_range(cls, intf, ap_intf):
         "When ap is out of range"
         if ap_intf.node == intf.associatedTo:
-            if ap_intf.encrypt and 'ieee80211r' not in ap_intf.node.params:
+            if ap_intf.encrypt and not ap_intf.ieee80211r:
                 if ap_intf.encrypt == 'wpa':
                     cls.remove_staconf(intf)
                     cls.kill_wpasupprocess(intf)
                     cls.check_if_wpafile_exist(intf)
             elif wmediumd_mode.mode == w_cst.SNR_MODE:
                 Association.setSNRWmediumd(intf.node, ap_intf.node, snr=-10)
-            if 'ieee80211r' not in ap_intf.node.params:
+            if not ap_intf.ieee80211r:
                 Association.disconnect(intf)
             cls.remove_assoc_from_params(intf, ap_intf)
         elif not intf.associatedTo:
@@ -157,8 +157,8 @@ class mobility(object):
                 if intf.node not in ap_intf.associatedStations:
                     ap_intf.associatedStations.append(intf.node)
                 if dist >= 0.01:
-                    if 'bgscan_threshold' in intf.node.params or 'active_scan' in intf.node.params \
-                    and (intf.encrypt == 'wpa'):
+                    if intf.bgscan_threshold or intf.active_scan \
+                            and intf.encrypt == 'wpa':
                         pass
                     else:
                         intf.rssi = rssi
@@ -221,11 +221,10 @@ class mobility(object):
 
     @classmethod
     def associate_interference_mode(cls, intf, ap_intf):
-        if 'bgscan_threshold' in intf.node.params or \
-                ('active_scan' in intf.node.params and 'wpa' in intf.encrypt):
+        if intf.bgscan_threshold or (intf.active_scan and 'wpa' in intf.encrypt):
             if intf.associatedTo == '':
                 Association.associate_infra(intf, ap_intf)
-                if 'bgscan_threshold' in intf.node.params:
+                if intf.bgscan_threshold:
                     intf.associatedTo = 'bgscan'
                 else:
                     intf.associatedTo = 'active_scan'

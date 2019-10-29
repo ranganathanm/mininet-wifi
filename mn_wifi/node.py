@@ -392,9 +392,9 @@ class Node_wifi(Node):
         if 'position' in self.params and 'position' in ap.params:
             dist = self.get_distance_to(ap)
 
-        if dist < ap.params['range'][wlan] or dist == 100000:
-            if self.params['associatedTo'][wlan] != ap:
-                if self.params['associatedTo'][wlan]:
+        if dist < ap.wintfs[wlan].range or dist == 100000:
+            if self.wintfs[wlan].associatedTo != ap:
+                if self.wintfs[wlan].associatedTo:
                     Association.disconnect(self, intf)
                     self.wintfs[0].rssi = 0
                 Association.associate_infra(self, ap, wlan, 0)
@@ -911,8 +911,7 @@ class AccessPoint(AP):
             if intf.encrypt and 'config' not in intf.node.params:
                 if intf.encrypt == 'wpa':
                     intf.auth_algs = 1
-                    if 'ieee80211r' in intf.node.params \
-                            and intf.node.params['ieee80211r'] == 'yes':
+                    if intf.ieee80211r:
                         intf.wpa_key_mgmt = 'FT-EAP'
                     else:
                         intf.wpa_key_mgmt = 'WPA-EAP'
@@ -921,9 +920,7 @@ class AccessPoint(AP):
                 elif intf.encrypt == 'wpa2' \
                         or intf.encrypt == 'wpa3':
                     intf.auth_algs = 1
-                    if 'ieee80211r' in intf.node.params \
-                            and intf.node.params['ieee80211r'] == 'yes' \
-                            and not intf.authmode:
+                    if intf.ieee80211r and not intf.authmode:
                         intf.wpa_key_mgmt = 'FT-PSK'
                     elif intf.authmode == '8021x':
                         intf.wpa_key_mgmt = 'WPA-EAP'
@@ -944,12 +941,11 @@ class AccessPoint(AP):
     def get_mode_config(self, intf):
         cmd = ''
         if intf.mode == 'n':
-            if 'band' in intf.node.params:
+            if intf.band:
                 if intf.band == '5' or intf.band == 5:
                     cmd += ("\nhw_mode=a")
                 else:
                     cmd += ("\nhw_mode=g")
-                intf.node.params.pop("band", None)
             else:
                 cmd += ("\nhw_mode=g")
         elif intf.mode == 'a':
@@ -1035,10 +1031,9 @@ class AccessPoint(AP):
                 cmd += ("\nnas_identifier=%s.example.com" % intf.node.name)
                 cmd += ("\nauth_server_addr=%s" % intf.radius_server)
                 cmd += ("\nauth_server_port=1812")
-                if 'shared_secret' not in intf.node.params:
-                    intf.node.params['shared_secret'] = 'secret'
-                cmd += ("\nauth_server_shared_secret=%s"
-                             % intf.node.params['shared_secret'])
+                if not intf.shared_secret:
+                    intf.shared_secret = 'secret'
+                cmd += ("\nauth_server_shared_secret=%s" % intf.shared_secret)
             else:
                 if intf.encrypt:
                     if 'wpa' in intf.encrypt:
@@ -1066,8 +1061,7 @@ class AccessPoint(AP):
                     cmd += ("\nwmm_enabled=1")
                     cmd += ("\nieee80211n=1")
 
-                if 'ieee80211r' in intf.node.params and \
-                                intf.node.params['ieee80211r'] is 'yes':
+                if intf.ieee80211r:
                     if intf.mobility_domain:
                         cmd += ("\nmobility_domain=%s" % intf.mobility_domain)
                         # cmd += ("\nown_ip_addr=127.0.0.1")

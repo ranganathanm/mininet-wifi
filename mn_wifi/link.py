@@ -1595,8 +1595,8 @@ class Association(IntfWireless):
         no_upt = ['active_scan', 'bgscan']
         if intf.associatedTo not in no_upt:
             if intf.associatedTo \
-                    and intf.node in intf.associatedTo.params['associatedStations']:
-                intf.associatedTo.params['associatedStations'].remove(intf.node)
+                    and intf.node in ap_intf.associatedStations:
+                ap_intf.associatedStations.remove(intf.node)
             cls.updateParams(intf, ap_intf)
             ap_intf.associatedStations.append(intf.node)
             intf.associatedTo = ap_intf.node

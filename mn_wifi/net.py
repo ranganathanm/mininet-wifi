@@ -613,7 +613,7 @@ class Mininet_wifi(Mininet):
             if dist > ap.wintfs[ap_wlan].range:
                 doAssociation = False
         if doAssociation:
-            Association.associate(wlan, intf, ap_intf)
+            Association.associate(intf, ap_intf)
 
             if self.link != wmediumd:
                 if 'bw' not in params and \

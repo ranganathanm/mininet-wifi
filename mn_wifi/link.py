@@ -1446,7 +1446,7 @@ class Association(IntfWireless):
                                          sta.wmIface[0], snr))
 
     @classmethod
-    def configureWirelessLink(cls, wlan, intf, ap_intf):
+    def configureWirelessLink(cls, intf, ap_intf):
         dist = intf.node.get_distance_to(ap_intf.node)
         if dist <= ap_intf.range:
             if not wmediumd_mode.mode == w_cst.INTERFERENCE_MODE:
@@ -1481,10 +1481,10 @@ class Association(IntfWireless):
         intf.ssid = ap_intf.ssid
 
     @classmethod
-    def associate(cls, wlan, intf, ap_intf):
+    def associate(cls, intf, ap_intf):
         "Associate to Access Point"
         if 'position' in intf.node.params:
-            cls.configureWirelessLink(wlan, intf, ap_intf)
+            cls.configureWirelessLink(intf, ap_intf)
         else:
             cls.associate_infra(intf, ap_intf)
 
@@ -1509,8 +1509,7 @@ class Association(IntfWireless):
     @classmethod
     def associate_infra(cls, intf, ap_intf):
         associated = 0
-        if 'ieee80211r' in ap_intf.node.params and ap_intf.node.params['ieee80211r'] == 'yes' \
-        and (not intf.encrypt or 'wpa' in intf.encrypt):
+        if ap_intf.ieee80211r and (not intf.encrypt or 'wpa' in intf.encrypt):
             if not intf.associatedTo:
                 command = ('ps -aux | grep %s | wc -l' % intf.name)
                 np = int(subprocess.check_output(command, shell=True))
@@ -1526,8 +1525,7 @@ class Association(IntfWireless):
             cls.associate_noEncrypt(intf, ap_intf)
         else:
             if not intf.associatedTo:
-                if 'wpa' in ap_intf.encrypt \
-                and (not intf.encrypt or 'wpa' in intf.encrypt):
+                if 'wpa' in ap_intf.encrypt and (not intf.encrypt or 'wpa' in intf.encrypt):
                     cls.wpa(intf, ap_intf)
                     associated = 1
                 elif ap_intf.encrypt == 'wep':

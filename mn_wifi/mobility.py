@@ -222,7 +222,7 @@ class mobility(object):
     @classmethod
     def associate_interference_mode(cls, intf, ap_intf):
         if intf.bgscan_threshold or (intf.active_scan and 'wpa' in intf.encrypt):
-            if intf.associatedTo == '':
+            if not intf.associatedTo:
                 Association.associate_infra(intf, ap_intf)
                 if intf.bgscan_threshold:
                     intf.associatedTo = 'bgscan'

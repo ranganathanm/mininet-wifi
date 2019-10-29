@@ -219,8 +219,8 @@ class GetSignalRange(object):
         (L) System loss"""
         # Convert Ghz to Hz
         f = intf.freq * 10 ** 9
-        txpower = intf.txpower
-        gain  = intf.antennaGain
+        txpower = int(intf.txpower)
+        gain  = int(intf.antennaGain)
         gains = txpower + (gain * 2)
         c = 299792458.0
         L = ppm.sL
@@ -252,9 +252,9 @@ class GetSignalRange(object):
     def twoRayGround(self, intf):
         """Two Ray Ground Propagation Loss Model (does not give a good result for
         a short distance)"""
-        gt = intf.antennaGain
-        ht = intf.antennaHeight
-        pt = intf.txpower
+        gt = int(intf.antennaGain)
+        ht = int(intf.antennaHeight)
+        pt = int(intf.txpower)
         rssi = intf.rssi
 
         gains = pt + gt
@@ -271,8 +271,8 @@ class GetSignalRange(object):
         exponent: The exponent of the Path Loss propagation model, where 2 is
         for propagation in free space
         (dist) is the distance between the transmitter and the receiver (m)"""
-        txpower = intf.txpower
-        gain = intf.antennaGain
+        txpower = int(intf.txpower)
+        gain = int(intf.antennaGain)
         gains = txpower + (gain * 2)
         ref_d = 1
 
@@ -288,8 +288,8 @@ class GetSignalRange(object):
             wmediumd_mode
 
         ref_d = 1
-        txpower = intf.txpower
-        gain = intf.antennaGain
+        txpower = int(intf.txpower)
+        gain = int(intf.antennaGain)
         gains = txpower + (gain * 2)
         mean = 0
         variance = propagationModel.variance
@@ -313,8 +313,8 @@ class GetSignalRange(object):
     def ITU(self, intf):
         """International Telecommunication Union (ITU) Propagation Loss Model:"""
         f = intf.freq * 10 ** 3
-        txpower = intf.txpower
-        gain  = intf.antennaGain
+        txpower = int(intf.txpower)
+        gain  = int(intf.antennaGain)
         gains = txpower + (gain * 2)
         N = 28  # Power Loss Coefficient
         lF = ppm.lF  # Floor penetration loss factor

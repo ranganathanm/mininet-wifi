@@ -1242,7 +1242,7 @@ class adhoc(IntfWireless):
         self.range = intf.range
 
         if proto:
-            manetProtocols(proto, node, wlan, **params)
+            manetProtocols(intf, proto, **params)
 
     def configureAdhoc(self, intf, passwd, ht_cap):
         "Configure Wireless Ad Hoc"
@@ -1281,6 +1281,7 @@ class mesh(IntfWireless):
 
     def __init__(self, node, intf=None, mode='g', channel=1,
                  ssid='meshNet', passwd=None, ht_cap=''):
+        from mn_wifi.node import AP
         """Configure wireless mesh
         node: name of the node
         self: custom association class/constructor
@@ -1296,12 +1297,19 @@ class mesh(IntfWireless):
         self.mac = intf.mac
         self.ip6 = intf.ip6
         self.ip = intf.ip
+        self.txpower = intf.txpower
+        self.antennaGain = intf.antennaGain
+        self.stationsInRange = intf.stationsInRange
+        self.associatedStations = intf.associatedStations
 
         self.range = intf.range
         self.ssid = ssid
 
-        node.addWIntf(self, port=wlan)
         node.addWAttr(self, port=wlan)
+        if isinstance(node, AP):
+            node.addWIntf(self, port=wlan+1)
+        else:
+            node.addWIntf(self, port=wlan)
 
         self.setMeshIface(node, mode, channel, wlan, iface)
         self.configureMesh(node, ssid, ht_cap, passwd, iface)

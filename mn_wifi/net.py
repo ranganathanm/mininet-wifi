@@ -1620,9 +1620,10 @@ class Mininet_wifi(Mininet):
             sixLoWPAN_module(self.sixLP, sixlowpan.n_wpans)
         self.configureWirelessLink()
         self.createVirtualIfaces(self.stations)
-        AccessPoint(self.aps, self.driver)
+        AccessPoint(self.aps, self.driver, check_nm =True)
         if self.link == wmediumd:
             self.configureWmediumd()
+        AccessPoint(self.aps, self.driver)
 
         setParam = True
         if self.wmediumd_mode == interference and not self.isVanet:
@@ -1691,18 +1692,11 @@ class Mininet_wifi(Mininet):
             if sta in mob.stations:
                 mob.stations.remove(sta)
 
-        if self.mob_param:
-            nodes = []
-            for node in self.stations:
-                if 'position' in node.params:
-                    nodes.append(node)
-        else:
-            nodes = self.aps + self.stations + self.cars
-
+        nodes = self.aps + self.stations + self.cars
         if not self.roads:
             for node in nodes:
-                for intf in node.wintfs.values():
-                    if 'position' in node.params and 'link' not in node.params:
+                if 'position' in node.params:
+                    for intf in node.wintfs.values():
                         if self.wmediumd_mode != error_prob:
                             pos = node.params['position']
                             if isinstance(intf, adhoc):
@@ -1722,7 +1716,7 @@ class Mininet_wifi(Mininet):
             mob.aps = self.aps
             nodes = self.stations + self.cars
             for node in nodes:
-                if 'position' in node.params and 'link' not in node.params:
+                if 'position' in node.params:
                     mob.configLinks(node)
 
     @staticmethod

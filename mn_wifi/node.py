@@ -844,17 +844,21 @@ class AccessPoint(AP):
 
     write_mac = False
 
-    def __init__(self, aps, driver, setMaster=False):
+    def __init__(self, aps, driver, setMaster=False, check_nm=False):
         'configure ap'
         self.name = ''
-        self.check_nm(aps, driver, setMaster)
-        self.configure(aps)
+        if check_nm:
+            self.check_nm(aps, driver, setMaster)
+        else:
+            self.configure(aps)
 
     def check_nm(self, aps, driver, setMaster):
         for ap in aps:
             for wlan in range(len(ap.params['wlan'])):
                 if not setMaster:
                     self.configAP(ap, wlan)
+                for wlan, intf in enumerate(ap.wintfs.values()):
+                    self.setIPMAC(intf)
 
             if 'vssids' in ap.params:
                 for i in range(1, ap.params['vssids'] + 1):

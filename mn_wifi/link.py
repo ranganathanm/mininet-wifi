@@ -765,26 +765,26 @@ class master(TCWirelessLink):
         self.freq = 2.412
         self.range = 0
         self.txpower = 14
-        self.ieee80211r = ''
-        self.band = ''
-        self.authmode = ''
-        self.beacon_int = ''
-        self.config = ''
+        self.ieee80211r = None
+        self.band = None
+        self.authmode = None
+        self.beacon_int = None
+        self.config = None
         self.driver = 'nl80211'
-        self.encrypt = ''
-        self.ht_capab = ''
+        self.encrypt = None
+        self.ht_capab = None
         self.id = wlan
-        self.ip = ''
-        self.ip6 = ''
-        self.isolate_clients = ''
-        self.mac = ''
+        self.ip = None
+        self.ip6 = None
+        self.isolate_clients = None
+        self.mac = None
         self.mode = 'g'
-        self.passwd = ''
-        self.shared_secret = ''
-        self.ssid = ''
-        self.wpa_key_mgmt = ''
-        self.rsn_pairwise = ''
-        self.radius_server = ''
+        self.passwd = None
+        self.shared_secret = None
+        self.ssid = None
+        self.wpa_key_mgmt = None
+        self.rsn_pairwise = None
+        self.radius_server = None
         self.link = None
 
         for key in self.__dict__.keys():
@@ -807,17 +807,19 @@ class managed(TCWirelessLink):
         self.node = node
         self.apsInRange = {}
         self.range = 0
-        self.ssid = ''
-        self.mac = ''
-        self.scan_freq = ''
-        self.active_scan = ''
-        self.freq_list = ''
-        self.encrypt = ''
-        self.radius_identity = ''
-        self.radius_passwd = ''
-        self.passwd = ''
-        self.config = ''
-        self.authmode = ''
+        self.ssid = None
+        self.mac = None
+        self.scan_freq = None
+        self.active_scan = None
+        self.freq_list = None
+        self.encrypt = None
+        self.radius_identity = None
+        self.stationsInRange = None
+        self.associatedStations = None
+        self.radius_passwd = None
+        self.passwd = None
+        self.config = None
+        self.authmode = None
         self.bgscan_module = 'simple'
         self.s_inverval = 0
         self.bgscan_threshold = 0
@@ -850,6 +852,7 @@ class _4addrClient(TCWirelessLink):
     "managed class"
     def __init__(self, node, wlan):
         self.node = node
+        self.id = wlan
         self.ip = None
         self.mac = node.wintfs[wlan-1].mac
         self.range = node.wintfs[0].range
@@ -869,6 +872,7 @@ class _4addrAP(TCWirelessLink):
     def __init__(self, node, wlan):
         self.node = node
         self.ip = None
+        self.id = wlan
         self.mac = node.wintfs[0].mac
         self.range = node.wintfs[0].range
         self.txpower = 0
@@ -1218,7 +1222,7 @@ class adhoc(IntfWireless):
         wlan = node.params['wlan'].index(intf)
         intf = node.wintfs[wlan]
 
-        self.id = intf.id
+        self.id = wlan
         self.mac = intf.mac
         self.ip6 = intf.ip6
 
@@ -1293,7 +1297,7 @@ class mesh(IntfWireless):
         iface = intf
 
         self.name = self.name = '%s-mp%s' % (node, intf.name[-1:])
-        self.id = intf.id
+        self.id = wlan
         self.mac = intf.mac
         self.ip6 = intf.ip6
         self.ip = intf.ip

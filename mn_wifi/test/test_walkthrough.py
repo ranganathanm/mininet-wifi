@@ -514,7 +514,7 @@ class testWalkthrough(unittest.TestCase):
         p.expect('OVSAP ap1')
         p.expect(self.prompt)
         p.sendline('py sta1.setPosition(\'70,30,0\')')
-        p.sendline('sta1.wintfs[0].ssid')
+        p.sendline('py sta1.wintfs[0].ssid')
         p.expect('ssid-ap2')
         p.expect(self.prompt)
         p.sendline('py sta1.wintfs[0].apsInRange')

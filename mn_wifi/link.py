@@ -787,7 +787,7 @@ class master(TCWirelessLink):
 
         args = ['radius_identity', 'radius_passwd', 'ssid', 'encrypt',
                 'passwd', 'mode', 'channel', 'authmode', 'range',
-                'isolate_clients', 'ip', 'ip6']
+                'isolate_clients', 'ip', 'ip6', 'mac']
         for arg in args:
             if arg in node.params:
                 if isinstance(node.params[arg], BaseString):
@@ -832,7 +832,8 @@ class managed(TCWirelessLink):
         self.link = None
 
         args = ['radius_identity', 'radius_passwd', 'ssid', 'encrypt',
-                'passwd', 'mode', 'channel', 'authmode', 'range']
+                'passwd', 'mode', 'channel', 'authmode', 'range',
+                'mac']
         for arg in args:
             if arg in node.params:
                 setattr(self, arg, node.params[arg])

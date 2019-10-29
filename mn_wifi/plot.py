@@ -226,9 +226,8 @@ class plot2d (object):
         "instantiateCircle"
         ax = cls.ax
         color = cls.set_def_color(node)
-
         node.pltCircle = ax.add_patch(
-            patches.Circle((0, 0), max(node.params['range']),
+            patches.Circle((0, 0), node.wintfs[0].range,
                            fill=True, alpha=0.1, color=color))
 
     @classmethod
@@ -250,7 +249,7 @@ class plot2d (object):
 
     @classmethod
     def updateCircleRadius(cls, node):
-        node.pltCircle.set_radius(max(node.params['range']))
+        node.pltCircle.set_radius(node.wintfs[0].range)
 
     @classmethod
     def updateLine(cls, node):

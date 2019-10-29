@@ -64,12 +64,10 @@ class Mininet_6LoWPAN(Mininet):
         defaults: Default IP and MAC addresses
         node_mode: if interface is running in managed or master mode"""
         node.params['wpan'] = []
-        node.wpanPhyID = []
 
         wpans = self.count6LoWPANIfaces(**params)
 
         for wpan in range(wpans):
-            self.addParamsToNode(node)
             if node_mode == 'managed':
                 self.appendAssociatedTo(node)
                 self.add_ip_param(node, wpans, **params)
@@ -371,12 +369,6 @@ class Mininet_6LoWPAN(Mininet):
             result.insert(0, udpBw)
         output('*** Results: %s\n' % result)
         return result
-
-    @classmethod
-    def addParamsToNode(self, node):
-        "Add func and wpanPhyID"
-        node.func.append('none')
-        node.wpanPhyID.append(0)
 
     @classmethod
     def count6LoWPANIfaces(self, **params):

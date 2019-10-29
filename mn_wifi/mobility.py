@@ -150,7 +150,7 @@ class mobility(object):
     @classmethod
     def ap_in_range(cls, intf, ap, dist):
         for ap_intf in ap.wintfs.values():
-            rssi = intf.node.get_rssi(ap_intf.node, intf.id, dist)
+            rssi = intf.node.get_rssi(intf, ap_intf, dist)
             intf.apsInRange[ap_intf.node] = rssi
             ap_intf.stationsInRange[intf.node] = rssi
             if ap_intf.node == intf.associatedTo:

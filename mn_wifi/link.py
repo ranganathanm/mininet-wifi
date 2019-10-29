@@ -7,8 +7,9 @@ import subprocess
 from time import sleep
 from sys import version_info as py_version_info
 
+from mininet.util import BaseString
 from mininet.log import error, debug
-from mn_wifi.devices import CustomRate, DeviceRange
+from mn_wifi.devices import CustomRate
 from mn_wifi.manetRoutingProtocols import manetProtocols
 from mn_wifi.wmediumdConnector import DynamicIntfRef, \
     w_starter, SNRLink, w_txpower, w_pos, \
@@ -86,7 +87,7 @@ class IntfWireless(object):
             self.pexec('iw reg set US')
         intf.mode = mode
 
-    def setChannel(self, channel, intf, AP = None):
+    def setChannel(self, channel, intf, AP=None):
         self.setChanParam(channel, intf)
         if AP and not isinstance(self.intf, mesh):
             self.pexec(
@@ -125,8 +126,8 @@ class IntfWireless(object):
     def setMode(self, mode):
         self.mode = mode
 
-    def setChannel(self, channel):
-        self.channel = channel
+    def setTxPower(self, txpower):
+        self.txpower = txpower
 
     def setIP(self, ipstr, prefixLen=None, **args):
         """Set our IP address"""
@@ -758,37 +759,44 @@ class master(TCWirelessLink):
         self.params = {}
         self.stationsInRange = {}
         self.associatedStations = []
-        self.range = 0
-        self.txpower = 14
-        self.driver = 'nl80211'
-        self.ht_capab = ''
-        self.beacon_int = ''
-        self.isolate_clients = ''
-        self.mac = ''
-        self.ssid = ''
-        self.encrypt = ''
-        self.wpa_key_mgmt = ''
-        self.passwd = ''
-        self.authmode = ''
-        self.config = ''
-        self.rsn_pairwise = ''
-        self.active_scan = ''
-        self.radius_server = ''
-        self.mode = 'g'
-        self.freq = 2.412
-        self.channel = 1
         self.antennaGain = 5.0
         self.antennaHeight = 1.0
+        self.channel = 1
+        self.freq = 2.412
+        self.range = 0
+        self.txpower = 14
+        self.active_scan = ''
+        self.authmode = ''
+        self.beacon_int = ''
+        self.config = ''
+        self.driver = 'nl80211'
+        self.encrypt = ''
+        self.ht_capab = ''
         self.id = wlan
         self.ip = ''
         self.ip6 = ''
+        self.isolate_clients = ''
+        self.mac = ''
+        self.mode = 'g'
+        self.passwd = ''
+        self.ssid = ''
+        self.wpa_key_mgmt = ''
+        self.rsn_pairwise = ''
+        self.radius_server = ''
         self.link = None
 
         args = ['radius_identity', 'radius_passwd', 'ssid', 'encrypt',
-                'passwd', 'mode', 'channel', 'authmode', 'range']
+                'passwd', 'mode', 'channel', 'authmode', 'range',
+                'isolate_clients', 'ip', 'ip6']
         for arg in args:
             if arg in node.params:
-                setattr(self, arg, node.params[arg])
+                if isinstance(node.params[arg], BaseString):
+                    setattr(self, arg, node.params[arg])
+                elif isinstance(node.params[arg], list):
+                    arg_ = node.params[arg][0].split(',')
+                    setattr(self, arg, arg_[wlan])
+                elif isinstance(node.params[arg], int):
+                    setattr(self, arg, node.params[arg])
 
 
 class managed(TCWirelessLink):
@@ -1421,15 +1429,17 @@ class Association(IntfWireless):
                 if intf.node != ap_intf.associatedStations:
                     ap_intf.associatedStations.append(intf.node)
             if not wmediumd_mode.mode == w_cst.INTERFERENCE_MODE:
-                cls.setRSSI(intf, ap_intf, wlan, dist)
+                cls.get_rssi(intf, ap_intf, dist)
 
     @classmethod
-    def setRSSI(cls, intf, ap_intf, wlan, dist):
-        rssi = intf.node.get_rssi(ap_intf.node, wlan, dist)
+    def get_rssi(cls, intf, ap_intf, dist):
+        from mn_wifi.propagationModels import propagationModel
+        rssi = float(propagationModel(intf, ap_intf, dist).rssi)
         intf.rssi = rssi
         if ap_intf.node not in intf.apsInRange:
             intf.apsInRange[ap_intf.node] = rssi
             ap_intf.stationsInRange[intf.node] = rssi
+        return rssi
 
     @classmethod
     def updateParams(cls, intf, ap_intf):

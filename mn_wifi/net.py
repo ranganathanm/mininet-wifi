@@ -1634,7 +1634,7 @@ class Mininet_wifi(Mininet):
                     intf.range = node.getRange(intf=intf.name)
                 else:
                     if 'model' not in node.params:
-                        intf.txpower = node.get_txpower_prop_model(wlan)
+                        intf.txpower = node.get_txpower_prop_model(intf)
                 if not self.configure4addr and not self.configureWiFiDirect:
                     node.setTxPower(intf.txpower,
                                     intf=intf.name,
